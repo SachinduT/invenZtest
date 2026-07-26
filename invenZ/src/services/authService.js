@@ -1,36 +1,72 @@
-// src/services/authService.js
+// src/services/authService.js - DEMO MODE (Backend නැතුව)
 import api from './api';
 
+// ✅ Demo users for testing
+const DEMO_USERS = [
+  { id: 1, name: 'Admin', email: 'admin@invenz.com', password: 'admin123', role: 'Administrator' },
+  { id: 2, name: 'Manager', email: 'manager@invenz.com', password: 'manager123', role: 'Manager' },
+  { id: 3, name: 'Staff', email: 'staff@invenz.com', password: 'staff123', role: 'Staff' }
+];
+
 export const authService = {
-  // Login user
+  // ✅ Demo Login (No Backend)
   login: async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      // Find user in demo list
+      const foundUser = DEMO_USERS.find(u => 
+        u.email === email && u.password === password
+      );
       
-      if (response.data?.data?.token) {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      if (!foundUser) {
+        throw new Error('Invalid email or password');
       }
       
-      return response.data;
+      // Create user session
+      const userData = {
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
+        role: foundUser.role
+      };
+      
+      localStorage.setItem('token', 'demo-token-12345');
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      return { 
+        success: true, 
+        message: 'Login successful',
+        data: { user: userData, token: 'demo-token-12345' }
+      };
     } catch (error) {
-      throw error.response?.data || { message: 'Login failed' };
+      throw { message: error.message || 'Login failed' };
     }
   },
 
-  // Register user
+  // ✅ Demo Register (No Backend)
   register: async (userData) => {
     try {
-      const response = await api.post('/auth/register', userData);
-      
-      if (response.data?.data?.token) {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      const existingUser = DEMO_USERS.find(u => u.email === userData.email);
+      if (existingUser) {
+        throw new Error('Email already exists');
       }
       
-      return response.data;
+      const newUser = {
+        id: DEMO_USERS.length + 1,
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        role: 'Staff'
+      };
+      
+      DEMO_USERS.push(newUser);
+      
+      return { 
+        success: true, 
+        message: 'Registration successful',
+        data: { user: newUser }
+      };
     } catch (error) {
-      throw error.response?.data || { message: 'Registration failed' };
+      throw { message: error.message || 'Registration failed' };
     }
   },
 
@@ -57,56 +93,33 @@ export const authService = {
     return !!localStorage.getItem('token');
   },
 
-  // Forgot password
+  // Forgot password (Demo)
   forgotPassword: async (email) => {
-    try {
-      const response = await api.post('/auth/forgot-password', { email });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to send reset email' };
+    const foundUser = DEMO_USERS.find(u => u.email === email);
+    if (!foundUser) {
+      throw { message: 'Email not found' };
     }
+    return { success: true, message: 'Reset link sent to your email' };
   },
 
-  // Reset password
+  // Reset password (Demo)
   resetPassword: async (token, password) => {
-    try {
-      const response = await api.post(`/auth/reset-password/${token}`, { password });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to reset password' };
-    }
+    return { success: true, message: 'Password reset successfully' };
   },
 
-  // Update profile
+  // Update profile (Demo)
   updateProfile: async (userData) => {
-    try {
-      const response = await api.put('/auth/profile', userData);
-      if (response.data?.data?.user) {
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
-      }
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to update profile' };
+    const user = authService.getCurrentUser();
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return { success: true, data: { user: updatedUser } };
     }
+    throw { message: 'User not found' };
   },
 
-  // Get profile
-  getProfile: async () => {
-    try {
-      const response = await api.get('/auth/me');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to get profile' };
-    }
-  },
-
-  // Change password
+  // Change password (Demo)
   changePassword: async (currentPassword, newPassword) => {
-    try {
-      const response = await api.put('/auth/change-password', { currentPassword, newPassword });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to change password' };
-    }
+    return { success: true, message: 'Password changed successfully' };
   }
 };

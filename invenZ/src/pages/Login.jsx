@@ -1,4 +1,5 @@
 // src/pages/Login.jsx - WITH ATTRACTIVE ERROR MESSAGES
+// src/pages/Login.jsx - WITH DEMO USERS
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +13,8 @@ const Login = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [touched, setTouched] = useState({});
   const { login } = useAuth();
+  const [showDemoUsers, setShowDemoUsers] = useState(false);
+  const { login, users } = useAuth();
   const { error: showError, success } = useNotification();
   const navigate = useNavigate();
 
@@ -88,6 +91,7 @@ const Login = () => {
       return;
     }
 
+    e.preventDefault();  // ✅ Page Reload වෙන්න එපා!
     try {
       setLoading(true);
       const response = await login(email, password);
@@ -142,6 +146,9 @@ const Login = () => {
   // Check if field has error
   const hasError = (field) => {
     return fieldErrors[field] && touched[field];
+  const fillCredentials = (userEmail, userPassword) => {
+    setEmail(userEmail);
+    setPassword(userPassword);
   };
 
   return (
@@ -237,6 +244,41 @@ const Login = () => {
         </form>
 
         
+        {/* ✅ Demo Users - Quick Login */}
+        <div className="demo-users">
+          <button 
+            type="button"
+            className="demo-toggle"
+            onClick={() => setShowDemoUsers(!showDemoUsers)}
+          >
+            {showDemoUsers ? 'Hide Demo Users' : 'Show Demo Users'}
+          </button>
+          
+          {showDemoUsers && (
+            <div className="demo-users-list">
+              {users?.map((user) => (
+                <div 
+                  key={user.id}
+                  className="demo-user-item"
+                  onClick={() => fillCredentials(user.email, user.password)}
+                >
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1B5E20&color=fff&bold=true&size=40`} 
+                    alt={user.name} 
+                  />
+                  <div className="user-info">
+                    <span className="user-name">{user.name}</span>
+                    <span className="user-email">{user.email}</span>
+                    <span className={`user-role ${user.role.toLowerCase()}`}>
+                      {user.role}
+                    </span>
+                  </div>
+                  <span className="user-badge">Click to Login</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="footer-links">
           <p>

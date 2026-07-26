@@ -10,6 +10,7 @@ const Sidebar = () => {
     { icon: '🏢', label: 'Suppliers', path: '/suppliers' },
     { icon: '📈', label: 'Stock', path: '/stock' },
     { icon: '🛒', label: 'Orders', path: '/orders' },
+    { icon: '📉', label: 'Charts', path: '/charts' },  
     { icon: '📋', label: 'Reports', path: '/reports' },
     { icon: '⚙️', label: 'Settings', path: '/settings' },
   ];
@@ -26,6 +27,7 @@ const Sidebar = () => {
             <span className="sidebar-icon">{item.icon}</span>
             <span className="sidebar-label">{item.label}</span>
             {item.label === 'Stock' && <span className="sidebar-badge">5</span>}
+            {item.label === 'Charts' && <span className="sidebar-badge">📈</span>}
           </NavLink>
         ))}
       </nav>
