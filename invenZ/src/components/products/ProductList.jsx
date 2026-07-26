@@ -1,75 +1,50 @@
-// src/components/products/ProductList.jsx
-import React, { useState } from 'react';
-import ProductCard from './ProductCard';
-import ProductFilters from './ProductFilters';
-import './ProductList.css';
+// src/pages/Products.jsx
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useProduct } from '../context/ProductContext';
+import './Products.css';
 
-const ProductList = ({ 
-  products = [], 
-  loading = false,
-  onAdd, 
-  onEdit, 
-  onDelete, 
-  onView,
-  categories = []
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('name');
+const Products = () => {
+  const navigate = useNavigate();
+  const { products, loading, loadProducts } = useProduct();
 
-  const filteredProducts = products
-    .filter(product => {
-      const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'name': return a.name?.localeCompare(b.name);
-        case 'price': return (a.sellingPrice || 0) - (b.sellingPrice || 0);
-        case 'stock': return (a.currentStock || 0) - (b.currentStock || 0);
-        default: return 0;
-      }
-    });
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
   if (loading) {
-    return <div className="loader-container">Loading products...</div>;
+    return <div className="loading">Loading products...</div>;
   }
 
   return (
-    <div className="product-list">
-      <ProductFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        categories={categories}
-      />
-
-      <div className="product-stats">
-        <span>Showing {filteredProducts.length} of {products.length} products</span>
+    <div className="products-page">
+      <div className="page-header">
+        <h1>📦 Products</h1>
+        <button 
+          className="btn-add"
+          onClick={() => navigate('/products/add')}
+        >
+          + Add Product
+        </button>
       </div>
 
-      {filteredProducts.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📭</div>
-          <p>No products found</p>
-          <p className="empty-hint">Try adjusting your filters or add a new product</p>
-          <button className="btn-add" onClick={onAdd}>+ Add Product</button>
+      {products.length === 0 ? (
+        <div className="no-products">
+          <p>No products found. Click "Add Product" to create one.</p>
         </div>
       ) : (
         <div className="products-grid">
-          {filteredProducts.map(product => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onView={onView}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
+          {products.map(product => (
+            <div key={product.id} className="product-card">
+              <h3>{product.name}</h3>
+              <p><strong>SKU:</strong> {product.sku}</p>
+              <p><strong>Category:</strong> {product.category}</p>
+              <p><strong>Stock:</strong> {product.currentStock} {product.unit}</p>
+              <p><strong>Price:</strong> Rs. {product.sellingPrice}</p>
+              <span className={`status ${product.currentStock > product.minStock ? 'good' : 'low'}`}>
+                {product.currentStock > product.minStock ? '✅ In Stock' : '⚠️ Low Stock'}
+              </span>
+            </div>
           ))}
         </div>
       )}
@@ -77,4 +52,4 @@ const ProductList = ({
   );
 };
 
-export default ProductList;
+export default Products;

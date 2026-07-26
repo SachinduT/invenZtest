@@ -1,43 +1,44 @@
 // src/pages/Products.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useProduct } from '../context/ProductContext';
 import { useNotification } from '../context/NotificationContext';
-import { getProducts, deleteProduct } from '../services/productService';
 import './Products.css';
 
 const Products = () => {
   const navigate = useNavigate();
   const { success, error: showError } = useNotification();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { products, loading, loadProducts, deleteProduct } = useProduct();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [categories, setCategories] = useState([]);
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState('grid');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load products from Firebase
+  // Load products from Context
   useEffect(() => {
-    loadProducts();
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        await loadProducts();
+        console.log('✅ Products loaded successfully');
+      } catch (error) {
+        console.error('❌ Error loading products:', error);
+        showError('Failed to load products');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProducts();
   }, []);
 
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      const productsData = await getProducts();
-      console.log('✅ Products loaded:', productsData.length);
-      setProducts(productsData);
-      
-      // Extract unique categories
-      const uniqueCategories = [...new Set(productsData.map(p => p.category).filter(Boolean))];
-      setCategories(uniqueCategories);
-    } catch (error) {
-      console.error('❌ Error loading products:', error);
-      showError('Failed to load products');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Extract categories from products
+  useEffect(() => {
+    const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
+    setCategories(uniqueCategories);
+  }, [products]);
 
   const handleDelete = async (product) => {
     if (!window.confirm(`Are you sure you want to delete "${product.name}"?`)) return;
@@ -78,7 +79,7 @@ const Products = () => {
     if (current <= 0) return { label: 'Out of Stock', className: 'out-of-stock', icon: '🚫' };
     if (ratio <= 0.5) return { label: 'Critical', className: 'critical', icon: '🔴' };
     if (ratio <= 1) return { label: 'Low Stock', className: 'low-stock', icon: '🟡' };
-    if (current >= product.maxStock) return { label: 'Overstocked', className: 'overstocked', icon: '🔵' };
+    if (current >= (product.maxStock || 100)) return { label: 'Overstocked', className: 'overstocked', icon: '🔵' };
     return { label: 'In Stock', className: 'in-stock', icon: '🟢' };
   };
 
@@ -87,7 +88,7 @@ const Products = () => {
   const lowStockCount = products.filter(p => (p.currentStock || 0) <= (p.minStock || 0)).length;
   const outOfStockCount = products.filter(p => (p.currentStock || 0) === 0).length;
 
-  if (loading) {
+  if (isLoading || loading) {
     return (
       <div className="loader-container">
         <div className="loader-spinner"></div>
@@ -185,7 +186,7 @@ const Products = () => {
             </button>
           </div>
 
-          <button className="btn-refresh-modern" onClick={loadProducts} title="Refresh">
+          <button className="btn-refresh-modern" onClick={() => loadProducts()} title="Refresh">
             🔄
           </button>
         </div>

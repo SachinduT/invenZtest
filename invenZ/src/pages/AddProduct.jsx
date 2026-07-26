@@ -8,11 +8,10 @@ import './AddProduct.css';
 
 const AddProduct = () => {
   const navigate = useNavigate();
-  const { createProduct, loadProducts } = useProduct();  // ✅ loadProducts එක Add කරන්න
+  const { createProduct, loadProducts } = useProduct();
   const { success, error } = useNotification();
   const [loading, setLoading] = useState(false);
 
-  // ✅ Categories - ProductForm එකට යවන්න
   const categories = [
     { id: 'Food', name: 'Food' },
     { id: 'Electronics', name: 'Electronics' },
@@ -21,7 +20,6 @@ const AddProduct = () => {
     { id: 'Home & Garden', name: 'Home & Garden' }
   ];
 
-  // ✅ Suppliers - ProductForm එකට යවන්න
   const suppliers = [
     { id: 'sup1', name: 'Tech Distributors Ltd' },
     { id: 'sup2', name: 'Food Supply Co.' },
@@ -35,14 +33,14 @@ const AddProduct = () => {
       // ✅ Product එක Create කරනවා
       await createProduct(data);
       
-      // ✅ Products Reload කරන්න (නව Product එක පෙන්වන්න)
+      // ✅ Products Reload කරන්න
       await loadProducts();
       
-      success('Product added successfully!');
+      success('Product added successfully! 🎉');
       navigate('/products');
     } catch (err) {
+      console.error('❌ Error:', err);
       error(err.message || 'Failed to add product');
-    } finally {
       setLoading(false);
     }
   };

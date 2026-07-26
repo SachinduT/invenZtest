@@ -7,6 +7,7 @@ const ProductForm = ({
   onSubmit, 
   onCancel,
   categories = [],
+  suppliers = [],
   loading = false
 }) => {
   const [formData, setFormData] = useState({
@@ -44,17 +45,20 @@ const ProductForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  // ✅ Simple handleSubmit
   const handleSubmit = (e) => {
     e.preventDefault();
+    
     if (validate()) {
-      onSubmit({
+      const submitData = {
         ...formData,
         purchasePrice: parseFloat(formData.purchasePrice) || 0,
         sellingPrice: parseFloat(formData.sellingPrice) || 0,
         currentStock: parseInt(formData.currentStock) || 0,
         minStock: parseInt(formData.minStock) || 0,
         maxStock: parseInt(formData.maxStock) || 0
-      });
+      };
+      onSubmit(submitData);
     }
   };
 
@@ -108,13 +112,19 @@ const ProductForm = ({
 
         <div className="form-group">
           <label>Supplier</label>
-          <input
+          <select
             name="supplier"
             value={formData.supplier}
             onChange={handleChange}
-            placeholder="Enter supplier name"
             disabled={loading}
-          />
+          >
+            <option value="">Select Supplier</option>
+            {suppliers.map(sup => (
+              <option key={sup.id} value={sup.name}>
+                {sup.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
