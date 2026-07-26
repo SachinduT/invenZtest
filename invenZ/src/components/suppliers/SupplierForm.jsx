@@ -1,10 +1,12 @@
+// src/components/suppliers/SupplierForm.jsx
 import React, { useState } from 'react';
 import './SupplierForm.css';
 
 const SupplierForm = ({
   initialData = null,
   onSubmit,
-  onCancel
+  onCancel,
+  loading = false
 }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
@@ -51,7 +53,7 @@ const SupplierForm = ({
 
   return (
     <form className="supplier-form" onSubmit={handleSubmit}>
-      <h3>{initialData ? 'Edit Supplier' : 'Add New Supplier'}</h3>
+      <h3>{initialData ? '✏️ Edit Supplier' : '➕ Add New Supplier'}</h3>
 
       <div className="form-grid">
         <div className="form-group">
@@ -62,6 +64,7 @@ const SupplierForm = ({
             onChange={handleChange}
             className={errors.name ? 'error' : ''}
             placeholder="Enter supplier name"
+            disabled={loading}
           />
           {errors.name && <span className="error-text">{errors.name}</span>}
         </div>
@@ -73,6 +76,7 @@ const SupplierForm = ({
             value={formData.contactPerson}
             onChange={handleChange}
             placeholder="Enter contact person"
+            disabled={loading}
           />
         </div>
 
@@ -85,6 +89,7 @@ const SupplierForm = ({
             onChange={handleChange}
             className={errors.email ? 'error' : ''}
             placeholder="Enter email address"
+            disabled={loading}
           />
           {errors.email && <span className="error-text">{errors.email}</span>}
         </div>
@@ -96,6 +101,7 @@ const SupplierForm = ({
             value={formData.phone}
             onChange={handleChange}
             placeholder="Enter phone number"
+            disabled={loading}
           />
         </div>
       </div>
@@ -108,6 +114,7 @@ const SupplierForm = ({
           onChange={handleChange}
           rows="2"
           placeholder="Enter address"
+          disabled={loading}
         />
       </div>
 
@@ -119,6 +126,7 @@ const SupplierForm = ({
             value={formData.website}
             onChange={handleChange}
             placeholder="Enter website URL"
+            disabled={loading}
           />
         </div>
 
@@ -129,6 +137,7 @@ const SupplierForm = ({
             value={formData.taxNumber}
             onChange={handleChange}
             placeholder="Enter tax number"
+            disabled={loading}
           />
         </div>
 
@@ -139,6 +148,7 @@ const SupplierForm = ({
             value={formData.paymentTerms}
             onChange={handleChange}
             placeholder="e.g., Net 30"
+            disabled={loading}
           />
         </div>
 
@@ -154,15 +164,25 @@ const SupplierForm = ({
             step="0.5"
             className={errors.rating ? 'error' : ''}
             placeholder="0"
+            disabled={loading}
           />
           {errors.rating && <span className="error-text">{errors.rating}</span>}
         </div>
       </div>
 
       <div className="form-actions">
-        <button type="button" className="btn-cancel" onClick={onCancel}>Cancel</button>
-        <button type="submit" className="btn-submit">
-          {initialData ? 'Update Supplier' : 'Add Supplier'}
+        <button type="button" className="btn-cancel" onClick={onCancel} disabled={loading}>
+          Cancel
+        </button>
+        <button type="submit" className="btn-submit" disabled={loading}>
+          {loading ? (
+            <>
+              <span className="spinner-small"></span>
+              {initialData ? 'Updating...' : 'Adding...'}
+            </>
+          ) : (
+            initialData ? 'Update Supplier' : 'Add Supplier'
+          )}
         </button>
       </div>
     </form>

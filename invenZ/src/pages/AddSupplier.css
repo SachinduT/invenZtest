@@ -1,19 +1,44 @@
+/* src/pages/AddSupplier.css */
 .add-supplier-page {
-  max-width: 700px;
+  padding: 24px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
-.add-supplier-page .page-header {
+.page-header {
   margin-bottom: 24px;
 }
 
-.add-supplier-page .page-header h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 4px;
+.page-header h1 {
+  font-size: 28px;
+  color: #1B5E20;
+  margin: 0 0 8px 0;
 }
 
-.add-supplier-page .page-header p {
+.page-header p {
   color: #666;
+  margin: 0;
+}
+
+.supplier-form-container {
+  background: white;
+  padding: 0;
+  border-radius: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .add-supplier-page {
+    padding: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .add-supplier-page {
+    padding: 12px;
+  }
 }

@@ -1,96 +1,55 @@
-// src/pages/Products.jsx - WITH FORM SUBMIT HANDLER
+// src/pages/Products.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProduct } from '../context/ProductContext';
 import { useNotification } from '../context/NotificationContext';
-import ProductForm from '../components/products/ProductForm';
-import ProductDetails from '../components/products/ProductDetails';
+import { getProducts, deleteProduct } from '../services/productService';
 import './Products.css';
 
 const Products = () => {
   const navigate = useNavigate();
-  const { 
-    products, 
-    categories, 
-    loading, 
-    loadProducts, 
-    loadCategories,
-    deleteProduct,
-    createProduct,
-    updateProduct,
-    getProduct,
-    totalCount
-  } = useProduct();
-  
-  const { success, error } = useNotification();
+  const { success, error: showError } = useNotification();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [categories, setCategories] = useState([]);
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState('grid');
-  const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [viewingProduct, setViewingProduct] = useState(null);
-  const [formLoading, setFormLoading] = useState(false);
 
+  // Load products from Firebase
   useEffect(() => {
     loadProducts();
-    loadCategories();
   }, []);
 
-  const handleAdd = () => {
-    setEditingProduct(null);
-    setShowForm(true);
-  };
-
-  const handleEdit = (product) => {
-    setEditingProduct(product);
-    setShowForm(true);
-  };
-
-  const handleView = async (product) => {
+  const loadProducts = async () => {
     try {
-      const data = await getProduct(product.id);
-      setViewingProduct(data);
-    } catch (err) {
-      error('Failed to load product details');
+      setLoading(true);
+      const productsData = await getProducts();
+      console.log('✅ Products loaded:', productsData.length);
+      setProducts(productsData);
+      
+      // Extract unique categories
+      const uniqueCategories = [...new Set(productsData.map(p => p.category).filter(Boolean))];
+      setCategories(uniqueCategories);
+    } catch (error) {
+      console.error('❌ Error loading products:', error);
+      showError('Failed to load products');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (product) => {
     if (!window.confirm(`Are you sure you want to delete "${product.name}"?`)) return;
+    
     try {
       await deleteProduct(product.id);
-      success('Product deleted successfully!');
-    } catch (err) {
-      error('Failed to delete product');
+      success(`✅ "${product.name}" has been deleted successfully`);
+      await loadProducts(); // Reload products
+    } catch (error) {
+      console.error('❌ Error deleting product:', error);
+      showError('Failed to delete product');
     }
-  };
-
-  // ✅ FORM SUBMIT HANDLER - Product Add/Update කරාම Reload වෙනවා
-  const handleFormSubmit = async (data) => {
-    try {
-      setFormLoading(true);
-      if (editingProduct) {
-        await updateProduct(editingProduct.id, data);
-        success('Product updated successfully!');
-      } else {
-        await createProduct(data);
-        success('Product added successfully!');
-      }
-      setShowForm(false);
-      setEditingProduct(null);
-      // ✅ Products Reload කරන්න (නව Product එක පෙන්වන්න)
-      await loadProducts();
-    } catch (err) {
-      error(err.message || 'Failed to save product');
-    } finally {
-      setFormLoading(false);
-    }
-  };
-
-  const handleFormCancel = () => {
-    setShowForm(false);
-    setEditingProduct(null);
   };
 
   // Filter and Sort Products
@@ -110,46 +69,23 @@ const Products = () => {
       }
     });
 
-  const getStockStatus = (current, min) => {
+  // Get stock status
+  const getStockStatus = (product) => {
+    const current = product.currentStock || 0;
+    const min = product.minStock || 5;
     const ratio = current / min;
+    
     if (current <= 0) return { label: 'Out of Stock', className: 'out-of-stock', icon: '🚫' };
     if (ratio <= 0.5) return { label: 'Critical', className: 'critical', icon: '🔴' };
     if (ratio <= 1) return { label: 'Low Stock', className: 'low-stock', icon: '🟡' };
+    if (current >= product.maxStock) return { label: 'Overstocked', className: 'overstocked', icon: '🔵' };
     return { label: 'In Stock', className: 'in-stock', icon: '🟢' };
   };
 
-  // View Product Details
-  if (viewingProduct) {
-    return (
-      <ProductDetails
-        product={viewingProduct}
-        onClose={() => setViewingProduct(null)}
-        onEdit={() => {
-          setViewingProduct(null);
-          handleEdit(viewingProduct);
-        }}
-      />
-    );
-  }
-
-  // Add/Edit Product Form
-  if (showForm) {
-    return (
-      <div className="products-page-modern">
-        <div className="page-header-modern">
-          <h1>{editingProduct ? '✏️ Edit Product' : '📦 Add New Product'}</h1>
-          <p>{editingProduct ? 'Update product details' : 'Fill in the details to add a new product'}</p>
-        </div>
-        <ProductForm
-          initialData={editingProduct}
-          onSubmit={handleFormSubmit}
-          onCancel={handleFormCancel}
-          categories={categories}
-          loading={formLoading}
-        />
-      </div>
-    );
-  }
+  // Calculate stats
+  const totalCount = products.length;
+  const lowStockCount = products.filter(p => (p.currentStock || 0) <= (p.minStock || 0)).length;
+  const outOfStockCount = products.filter(p => (p.currentStock || 0) === 0).length;
 
   if (loading) {
     return (
@@ -168,7 +104,7 @@ const Products = () => {
           <h1>📦 Products</h1>
           <p>Manage your product inventory</p>
         </div>
-        <button className="btn-add-modern" onClick={handleAdd}>
+        <button className="btn-add-modern" onClick={() => navigate('/products/add')}>
           <span>➕</span> Add Product
         </button>
       </div>
@@ -176,15 +112,15 @@ const Products = () => {
       {/* Stats Bar */}
       <div className="stats-bar-modern">
         <div className="stat-item">
-          <span className="stat-number">{totalCount || 0}</span>
+          <span className="stat-number">{totalCount}</span>
           <span className="stat-label">Total Products</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{products.filter(p => p.currentStock <= p.minStock).length}</span>
+          <span className="stat-number">{lowStockCount}</span>
           <span className="stat-label">Low Stock</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{products.filter(p => p.currentStock === 0).length}</span>
+          <span className="stat-number">{outOfStockCount}</span>
           <span className="stat-label">Out of Stock</span>
         </div>
         <div className="stat-item">
@@ -216,8 +152,8 @@ const Products = () => {
           >
             <option value="all">All Categories</option>
             {categories.map(category => (
-              <option key={category.id || category} value={category.id || category}>
-                {category.name || category}
+              <option key={category} value={category}>
+                {category}
               </option>
             ))}
           </select>
@@ -248,6 +184,10 @@ const Products = () => {
               ☰
             </button>
           </div>
+
+          <button className="btn-refresh-modern" onClick={loadProducts} title="Refresh">
+            🔄
+          </button>
         </div>
       </div>
 
@@ -262,14 +202,14 @@ const Products = () => {
           <span className="empty-icon">📭</span>
           <h3>No products found</h3>
           <p>Try adjusting your filters or add a new product</p>
-          <button className="btn-add-modern" onClick={handleAdd}>
+          <button className="btn-add-modern" onClick={() => navigate('/products/add')}>
             + Add Product
           </button>
         </div>
       ) : (
         <div className={`products-container ${viewMode}`}>
           {filteredProducts.map((product) => {
-            const stockStatus = getStockStatus(product.currentStock, product.minStock);
+            const stockStatus = getStockStatus(product);
             
             if (viewMode === 'list') {
               return (
@@ -282,23 +222,46 @@ const Products = () => {
                     </div>
                     <div className="list-item-details">
                       <span className="list-item-category">{product.category}</span>
-                      <span className="list-item-price">Rs. {product.sellingPrice?.toLocaleString()}</span>
+                      <span className="list-item-price">Rs. {product.sellingPrice?.toLocaleString() || '0'}</span>
                       <span className={`list-item-stock ${stockStatus.className}`}>
-                        {stockStatus.icon} {product.currentStock} left
+                        {stockStatus.icon} {product.currentStock || 0} left
                       </span>
                     </div>
                   </div>
                   <div className="list-item-actions">
-                    <button className="btn-view" onClick={() => handleView(product)}>👁️</button>
-                    <button className="btn-edit" onClick={() => handleEdit(product)}>✏️</button>
-                    <button className="btn-delete" onClick={() => handleDelete(product)}>🗑️</button>
+                    <button 
+                      className="btn-view" 
+                      onClick={() => navigate(`/products/${product.id}`)}
+                      title="View Details"
+                    >
+                      👁️
+                    </button>
+                    <button 
+                      className="btn-edit" 
+                      onClick={() => navigate(`/products/edit/${product.id}`)}
+                      title="Edit"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      className="btn-delete" 
+                      onClick={() => handleDelete(product)}
+                      title="Delete"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               );
             }
 
+            // Grid View
             return (
-              <div key={product.id} className="product-card-modern" onClick={() => handleView(product)}>
+              <div 
+                key={product.id} 
+                className="product-card-modern"
+                onClick={() => navigate(`/products/${product.id}`)}
+              >
                 <div className="card-image">
                   <span className="product-emoji">📦</span>
                   <span className={`stock-badge ${stockStatus.className}`}>
@@ -311,8 +274,8 @@ const Products = () => {
                   <p className="product-category">{product.category}</p>
                   
                   <div className="card-pricing">
-                    <span className="selling-price">Rs. {product.sellingPrice?.toLocaleString()}</span>
-                    <span className="purchase-price">Cost: Rs. {product.purchasePrice?.toLocaleString()}</span>
+                    <span className="selling-price">Rs. {product.sellingPrice?.toLocaleString() || '0'}</span>
+                    <span className="purchase-price">Cost: Rs. {product.purchasePrice?.toLocaleString() || '0'}</span>
                   </div>
 
                   <div className="card-stock">
@@ -320,19 +283,37 @@ const Products = () => {
                       <div 
                         className={`stock-fill ${stockStatus.className}`}
                         style={{ 
-                          width: `${Math.min((product.currentStock / product.maxStock) * 100, 100)}%` 
+                          width: `${Math.min(((product.currentStock || 0) / (product.maxStock || 100)) * 100, 100)}%` 
                         }}
                       />
                     </div>
                     <span className="stock-count">
-                      {product.currentStock} / {product.maxStock}
+                      {product.currentStock || 0} / {product.maxStock || 100}
                     </span>
                   </div>
                 </div>
                 <div className="card-actions" onClick={(e) => e.stopPropagation()}>
-                  <button className="btn-view" onClick={() => handleView(product)}>👁️</button>
-                  <button className="btn-edit" onClick={() => handleEdit(product)}>✏️</button>
-                  <button className="btn-delete" onClick={() => handleDelete(product)}>🗑️</button>
+                  <button 
+                    className="btn-view" 
+                    onClick={() => navigate(`/products/${product.id}`)}
+                    title="View Details"
+                  >
+                    👁️
+                  </button>
+                  <button 
+                    className="btn-edit" 
+                    onClick={() => navigate(`/products/edit/${product.id}`)}
+                    title="Edit"
+                  >
+                    ✏️
+                  </button>
+                  <button 
+                    className="btn-delete" 
+                    onClick={() => handleDelete(product)}
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
             );
