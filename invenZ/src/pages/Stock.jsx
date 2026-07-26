@@ -10,6 +10,7 @@ const Stock = () => {
   const { success, error: showError } = useNotification();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [categories, setCategories] = useState([]);
@@ -22,7 +23,6 @@ const Stock = () => {
     categoriesCount: 0
   });
 
-  // Load products
   useEffect(() => {
     loadProducts();
   }, []);
@@ -31,28 +31,27 @@ const Stock = () => {
     try {
       setLoading(true);
       const productsData = await getProducts();
-      setProducts(productsData);
-      
-      // Calculate stats
-      calculateStats(productsData);
-      
-      // Extract unique categories
-      const uniqueCategories = [...new Set(productsData.map(p => p.category).filter(Boolean))];
+      const data = Array.isArray(productsData) ? productsData : [];
+      setProducts(data);
+      calculateStats(data);
+      const uniqueCategories = [...new Set(data.map(p => p?.category).filter(Boolean))];
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Error loading products:', error);
-      showError('Failed to load stock data');
+      showError('❌ Failed to load stock data');
     } finally {
       setLoading(false);
     }
   };
 
   const calculateStats = (productsData) => {
-    const totalItems = productsData.reduce((sum, p) => sum + (p.currentStock || 0), 0);
-    const totalValue = productsData.reduce((sum, p) => sum + ((p.currentStock || 0) * (p.purchasePrice || 0)), 0);
-    const lowStockCount = productsData.filter(p => (p.currentStock || 0) <= (p.minStock || 0)).length;
-    const outOfStockCount = productsData.filter(p => (p.currentStock || 0) === 0).length;
-    const categoriesCount = [...new Set(productsData.map(p => p.category).filter(Boolean))].length;
+    const data = Array.isArray(productsData) ? productsData : [];
+    
+    const totalItems = data.reduce((sum, p) => sum + (p?.currentStock || 0), 0);
+    const totalValue = data.reduce((sum, p) => sum + ((p?.currentStock || 0) * (p?.purchasePrice || 0)), 0);
+    const lowStockCount = data.filter(p => (p?.currentStock || 0) <= (p?.minStock || 0)).length;
+    const outOfStockCount = data.filter(p => (p?.currentStock || 0) === 0).length;
+    const categoriesCount = [...new Set(data.map(p => p?.category).filter(Boolean))].length;
 
     setStats({
       totalItems,
@@ -64,32 +63,38 @@ const Stock = () => {
   };
 
   const handleUpdateStock = async (productId, newStock) => {
+    if (newStock < 0) return;
+    
     try {
+      setUpdating(productId);
       await updateStock(productId, newStock);
       success('✅ Stock updated successfully!');
       await loadProducts();
     } catch (error) {
-      showError('Failed to update stock');
+      console.error('Error updating stock:', error);
+      showError('❌ Failed to update stock');
+    } finally {
+      setUpdating(null);
     }
   };
 
   const filteredProducts = products
     .filter(product => {
-      const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+      const matchesSearch = product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product?.sku?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || product?.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
 
   const getStockStatus = (product) => {
-    const current = product.currentStock || 0;
-    const min = product.minStock || 5;
-    const max = product.maxStock || 100;
+    const current = product?.currentStock || 0;
+    const min = product?.minStock || 5;
+    const max = product?.maxStock || 100;
     const ratio = current / min;
     
-    if (current <= 0) return { label: 'Out of Stock', className: 'out-of-stock', icon: '🚫', color: '#f44336' };
-    if (ratio <= 0.5) return { label: 'Critical', className: 'critical', icon: '🔴', color: '#f44336' };
-    if (ratio <= 1) return { label: 'Low Stock', className: 'low-stock', icon: '🟡', color: '#ff9800' };
+    if (current <= 0) return { label: 'Out of Stock', className: 'out-of-stock', icon: '🚫', color: '#F44336' };
+    if (ratio <= 0.5) return { label: 'Critical', className: 'critical', icon: '🔴', color: '#F44336' };
+    if (ratio <= 1) return { label: 'Low Stock', className: 'low-stock', icon: '🟡', color: '#FF9800' };
     if (current >= max) return { label: 'Overstocked', className: 'overstocked', icon: '🔵', color: '#2196F3' };
     return { label: 'In Stock', className: 'in-stock', icon: '🟢', color: '#4CAF50' };
   };
@@ -105,13 +110,16 @@ const Stock = () => {
 
   return (
     <div className="stock-page">
-      {/* Page Header */}
-      <div className="page-header">
-        <div>
-          <h1>📈 Stock Management</h1>
-          <p>Monitor and manage your inventory levels</p>
-        </div>
-        <button className="btn-refresh" onClick={loadProducts}>
+      {/* Back to Dashboard */}
+      <div className="stock-nav">
+        <button className="btn-back-dashboard" onClick={() => navigate('/dashboard')}>
+          <span className="back-icon">←</span> Back to Dashboard
+        </button>
+      </div>
+
+      {/* Refresh Button Only */}
+      <div className="stock-actions">
+        <button className="btn-refresh" onClick={loadProducts} disabled={loading}>
           🔄 Refresh
         </button>
       </div>
@@ -135,14 +143,14 @@ const Stock = () => {
         <div className="stat-card">
           <div className="stat-icon" style={{ background: '#fff3e0' }}>⚠️</div>
           <div className="stat-info">
-            <span className="stat-number" style={{ color: '#ff9800' }}>{stats.lowStockCount}</span>
+            <span className="stat-number" style={{ color: '#FF9800' }}>{stats.lowStockCount}</span>
             <span className="stat-label">Low Stock</span>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon" style={{ background: '#ffebee' }}>🚫</div>
           <div className="stat-info">
-            <span className="stat-number" style={{ color: '#f44336' }}>{stats.outOfStockCount}</span>
+            <span className="stat-number" style={{ color: '#F44336' }}>{stats.outOfStockCount}</span>
             <span className="stat-label">Out of Stock</span>
           </div>
         </div>
@@ -217,6 +225,7 @@ const Stock = () => {
         <div className={`stock-container ${viewMode}`}>
           {filteredProducts.map((product) => {
             const stockStatus = getStockStatus(product);
+            const isUpdating = updating === product.id;
             
             if (viewMode === 'list') {
               return (
@@ -228,7 +237,7 @@ const Stock = () => {
                       <span className="list-item-sku">#{product.sku}</span>
                     </div>
                     <div className="list-item-details">
-                      <span className="list-item-category">{product.category}</span>
+                      <span className="list-item-category">{product.category || 'Uncategorized'}</span>
                       <span className="list-item-price">Rs. {product.purchasePrice?.toLocaleString() || '0'}</span>
                       <span className={`list-item-stock ${stockStatus.className}`}>
                         {stockStatus.icon} {product.currentStock || 0} units
@@ -240,12 +249,14 @@ const Stock = () => {
                       <button 
                         className="btn-stock-adjust"
                         onClick={() => handleUpdateStock(product.id, (product.currentStock || 0) + 1)}
+                        disabled={isUpdating}
                       >
                         +1
                       </button>
                       <button 
                         className="btn-stock-adjust"
                         onClick={() => handleUpdateStock(product.id, Math.max(0, (product.currentStock || 0) - 1))}
+                        disabled={isUpdating}
                       >
                         -1
                       </button>
@@ -273,7 +284,7 @@ const Stock = () => {
                 <div className="stock-card-body">
                   <h4>{product.name}</h4>
                   <p className="product-sku">SKU: {product.sku}</p>
-                  <p className="product-category">{product.category}</p>
+                  <p className="product-category">{product.category || 'Uncategorized'}</p>
                   
                   <div className="stock-details">
                     <div className="detail-item">
@@ -309,6 +320,7 @@ const Stock = () => {
                     <button 
                       className="btn-adjust"
                       onClick={() => handleUpdateStock(product.id, Math.max(0, (product.currentStock || 0) - 1))}
+                      disabled={isUpdating}
                     >
                       −
                     </button>
@@ -316,14 +328,16 @@ const Stock = () => {
                     <button 
                       className="btn-adjust"
                       onClick={() => handleUpdateStock(product.id, (product.currentStock || 0) + 1)}
+                      disabled={isUpdating}
                     >
                       +
                     </button>
                     <button 
                       className="btn-adjust-large"
                       onClick={() => handleUpdateStock(product.id, (product.currentStock || 0) + 10)}
+                      disabled={isUpdating}
                     >
-                      +10
+                      {isUpdating ? '...' : '+10'}
                     </button>
                   </div>
                 </div>
