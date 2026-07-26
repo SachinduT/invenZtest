@@ -2,14 +2,14 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
-import { 
-  AuthProvider, 
-  NotificationProvider, 
-  ProductProvider, 
-  SupplierProvider, 
-  StockProvider, 
+import {
+  AuthProvider,
+  NotificationProvider,
+  ProductProvider,
+  SupplierProvider,
+  StockProvider,
   OrderProvider,
-  ThemeProvider 
+  ThemeProvider
 } from './context';
 import './App.css';
 
@@ -64,14 +64,14 @@ function App() {
                           <Layout><Dashboard /></Layout>
                         </ProtectedRoute>
                       } />
-                      
+
                       {/* Categories */}
                       <Route path="/categories" element={
                         <ProtectedRoute>
                           <Layout><Categories /></Layout>
                         </ProtectedRoute>
                       } />
-                      
+
                       {/* Products */}
                       <Route path="/products" element={
                         <ProtectedRoute>
@@ -93,7 +93,7 @@ function App() {
                           <Layout><ProductDetails /></Layout>
                         </ProtectedRoute>
                       } />
-                      
+
                       {/* Suppliers */}
                       <Route path="/suppliers" element={
                         <ProtectedRoute>
@@ -110,7 +110,7 @@ function App() {
                           <Layout><SupplierDetails /></Layout>
                         </ProtectedRoute>
                       } />
-                      
+
                       {/* Stock */}
                       <Route path="/stock" element={
                         <ProtectedRoute>
@@ -122,7 +122,7 @@ function App() {
                           <Layout><StockMovements /></Layout>
                         </ProtectedRoute>
                       } />
-                      
+
                       {/* Orders */}
                       <Route path="/orders" element={
                         <ProtectedRoute>
@@ -139,43 +139,43 @@ function App() {
                           <Layout><SalesOrders /></Layout>
                         </ProtectedRoute>
                       } />
-                      
+
                       {/* Reports */}
                       <Route path="/reports" element={
                         <ProtectedRoute>
                           <Layout><Reports /></Layout>
                         </ProtectedRoute>
                       } />
-                      
+
                       {/* Settings */}
                       <Route path="/settings" element={
                         <ProtectedRoute>
                           <Layout><Settings /></Layout>
                         </ProtectedRoute>
                       } />
-                      
+
                       {/* 🔓 Public Routes - No Authentication Required */}
                       {/* ============================================
                           DASHBOARD
                           ============================================ */}
                       <Route path="/" element={<Layout><Dashboard /></Layout>} />
                       <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-                      
+
                       {/* ============================================
                           CATEGORIES
                           ============================================ */}
                       <Route path="/categories" element={<Layout><Categories /></Layout>} />
-                      
+
                       {/* ============================================
                           CHARTS
                           ============================================ */}
                       <Route path="/charts" element={<Layout><Charts /></Layout>} />
-                      
+
                       {/* ============================================
                           PROFILE
                           ============================================ */}
                       <Route path="/settings/profile" element={<Layout><Profile /></Layout>} />
-                      
+
                       {/* ============================================
                           PRODUCTS
                           ============================================ */}
@@ -183,37 +183,37 @@ function App() {
                       <Route path="/products/add" element={<Layout><AddProduct /></Layout>} />
                       <Route path="/products/edit/:id" element={<Layout><EditProduct /></Layout>} />
                       <Route path="/products/:id" element={<Layout><ProductDetails /></Layout>} />
-                      
+
                       {/* ============================================
                           SUPPLIERS
                           ============================================ */}
                       <Route path="/suppliers" element={<Layout><Suppliers /></Layout>} />
                       <Route path="/suppliers/add" element={<Layout><AddSupplier /></Layout>} />
                       <Route path="/suppliers/:id" element={<Layout><SupplierDetails /></Layout>} />
-                      
+
                       {/* ============================================
                           STOCK
                           ============================================ */}
                       <Route path="/stock" element={<Layout><Stock /></Layout>} />
                       <Route path="/stock/movements" element={<Layout><StockMovements /></Layout>} />
-                      
+
                       {/* ============================================
                           ORDERS
                           ============================================ */}
                       <Route path="/orders" element={<Layout><Orders /></Layout>} />
                       <Route path="/orders/purchase" element={<Layout><PurchaseOrders /></Layout>} />
                       <Route path="/orders/sales" element={<Layout><SalesOrders /></Layout>} />
-                      
+
                       {/* ============================================
                           REPORTS
                           ============================================ */}
                       <Route path="/reports" element={<Layout><Reports /></Layout>} />
-                      
+
                       {/* ============================================
                           SETTINGS
                           ============================================ */}
                       <Route path="/settings" element={<Layout><Settings /></Layout>} />
-                      
+
                       {/* ============================================
                           AUTH (Public Routes)
                           ============================================ */}
@@ -221,7 +221,12 @@ function App() {
                       <Route path="/register" element={<Signup />} />
                       <Route path="/signup" element={<Signup />} /> {/* Both /register and /signup work */}
                       <Route path="/forgot-password" element={<ForgotPassword />} />
-                      
+
+                      <Route path="/suppliers" element={<Layout><Suppliers /></Layout>} />
+                      <Route path="/suppliers/add" element={<Layout><AddSupplier /></Layout>} />
+                      <Route path="/suppliers/edit/:id" element={<Layout><AddSupplier /></Layout>} />
+                      <Route path="/suppliers/:id" element={<Layout><SupplierDetails /></Layout>} />
+
                       {/* 404 - Not Found */}
                       {/* ============================================
                           404 NOT FOUND
