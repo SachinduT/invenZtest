@@ -1,163 +1,122 @@
 /* src/components/products/ProductForm.css */
 .product-form {
-  background: var(--card-bg, #ffffff);
-  padding: 30px;
+  background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  max-width: 900px;
+  padding: 24px;
+  max-width: 800px;
   margin: 0 auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.form-grid {
+.product-form .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-.form-group {
+.product-form .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
-.form-group label {
+.product-form .form-group label {
+  font-size: 0.85rem;
   font-weight: 500;
-  font-size: 14px;
-  color: var(--text-primary, #1a1a1a);
+  color: #555;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: 10px 14px;
-  border: 1px solid var(--border-color, #ddd);
+.product-form .form-group input,
+.product-form .form-group select,
+.product-form .form-group textarea {
+  padding: 8px 12px;
+  border: 2px solid #e0e0e0;
   border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.2s;
-  background: var(--input-bg, #fff);
-  color: var(--text-primary, #1a1a1a);
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+  font-size: 0.9rem;
   outline: none;
-  border-color: #3964fe;
-  box-shadow: 0 0 0 3px rgba(57, 100, 254, 0.1);
+  transition: all 0.3s ease;
+  width: 100%;
+  font-family: inherit;
+  background: white;
+  color: #1a1a1a;
 }
 
-.form-group input.error,
-.form-group select.error {
-  border-color: #d32f2f;
+.product-form .form-group input:focus,
+.product-form .form-group select:focus,
+.product-form .form-group textarea:focus {
+  border-color: #1B5E20;
+  box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.1);
 }
 
-.form-group input:disabled,
-.form-group select:disabled,
-.form-group textarea:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.product-form .form-group input.error,
+.product-form .form-group select.error {
+  border-color: #F44336;
 }
 
-.error-text {
-  color: #d32f2f;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.form-group textarea {
+.product-form .form-group textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 60px;
 }
 
-.form-actions {
+.product-form .error-text {
+  color: #F44336;
+  font-size: 0.75rem;
+}
+
+.product-form .form-actions {
   display: flex;
-  gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color, #eee);
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
 }
 
-.btn-cancel,
-.btn-submit {
+.product-form .btn-cancel {
   padding: 10px 24px;
+  background: transparent;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.product-form .btn-cancel:hover {
+  background: #f5f5f5;
+}
+
+.product-form .btn-submit {
+  padding: 10px 32px;
+  background: #1B5E20;
+  color: white;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
-.btn-cancel {
-  background: var(--bg-secondary, #f0f0f0);
-  color: var(--text-primary, #1a1a1a);
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background: #e0e0e0;
-}
-
-.btn-submit {
-  background: #3964fe;
-  color: white;
-}
-
-.btn-submit:hover:not(:disabled) {
-  background: #2a4fd0;
+.product-form .btn-submit:hover {
+  background: #0D3B12;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(57, 100, 254, 0.3);
+  box-shadow: 0 4px 12px rgba(27, 94, 32, 0.3);
 }
 
-.btn-cancel:disabled,
-.btn-submit:disabled {
+.product-form .btn-submit:disabled,
+.product-form .btn-cancel:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
+  transform: none !important;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .form-grid {
+  .product-form {
+    padding: 16px;
+  }
+  
+  .product-form .form-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .product-form {
-    padding: 20px;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .btn-cancel,
-  .btn-submit {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .product-form {
-    background: #1e1e1e;
-  }
-  
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    background: #2d2d2d;
-    border-color: #444;
-    color: #e0e0e0;
-  }
-  
-  .btn-cancel {
-    background: #2d2d2d;
-    color: #e0e0e0;
-  }
-  
-  .btn-cancel:hover:not(:disabled) {
-    background: #3d3d3d;
   }
 }

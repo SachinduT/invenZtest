@@ -1,10 +1,26 @@
-// src/context/AuthContext.jsx - AUTO LOGIN + DEMO MODE WITH PASSWORD VALIDATION
+// src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authService } from '../services';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile
+} from 'firebase/auth';
+import { auth, db } from '../firebase/config';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
-// ✅ Demo Users
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// ✅ Demo Users - Fallback if Firebase fails
 const DEMO_USERS = [
   { 
     id: 1, 
@@ -33,84 +49,123 @@ const DEMO_USERS = [
 ];
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
 
-  // ✅ Auto Login for Demo
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check for saved user in localStorage first
-        const savedUser = localStorage.getItem('auth_user');
-        if (savedUser) {
-          const userData = JSON.parse(savedUser);
-          setUser(userData);
-          setIsAuthenticated(true);
-          setLoading(false);
-          return;
-        }
-
-        // ✅ Auto Login for Demo (No Backend needed)
-        const demoUser = {
-          id: 1,
-          name: 'Admin',
-          email: 'admin@invenz.com',
-          role: 'Administrator',
-          avatar: 'https://ui-avatars.com/api/?name=Admin&background=1B5E20&color=fff&bold=true&size=40'
-        };
-        setUser(demoUser);
-        setIsAuthenticated(true);
-        localStorage.setItem('auth_user', JSON.stringify(demoUser));
-        localStorage.setItem('token', 'demo-token-12345');
-      } catch (err) {
-        console.error('Auth check failed:', err);
-        setUser(null);
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
-      }
+  // Get error message helper
+  const getErrorMessage = (errorCode) => {
+    const errorMessages = {
+      'auth/email-already-in-use': 'Email already in use. Please try another email.',
+      'auth/invalid-email': 'Invalid email address format.',
+      'auth/weak-password': 'Password should be at least 6 characters.',
+      'auth/user-not-found': 'No account found with this email.',
+      'auth/wrong-password': 'Incorrect password.',
+      'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
+      'auth/network-request-failed': 'Network error. Please check your connection.'
     };
-    checkAuth();
-  }, []);
+    return errorMessages[errorCode] || 'Authentication failed. Please try again.';
+  };
 
-  // ✅ Login - Demo Mode
+  // ✅ Sign up with email and password (Firebase)
+  const signup = async (email, password, userData) => {
+    try {
+      setLoading(true);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Update profile with display name
+      await updateProfile(user, {
+        displayName: userData.name || userData.fullName
+      });
+
+      // Store additional user data in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: user.email,
+        name: userData.name || userData.fullName,
+        role: userData.role || 'User',
+        createdAt: new Date().toISOString(),
+        ...userData
+      });
+
+      setLoading(false);
+      return { user, message: 'Account created successfully!' };
+    } catch (error) {
+      setLoading(false);
+      throw new Error(getErrorMessage(error.code));
+    }
+  };
+
+  // ✅ Login with email and password (Firebase)
+  const loginWithFirebase = async (email, password) => {
+    try {
+      setLoading(true);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Fetch user profile from Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        setUserProfile(userDoc.data());
+      }
+      
+      setLoading(false);
+      return { user, message: 'Login successful!' };
+    } catch (error) {
+      setLoading(false);
+      throw new Error(getErrorMessage(error.code));
+    }
+  };
+
+  // ✅ Login - Demo Mode (Fallback)
   const login = async (email, password) => {
     try {
       setLoading(true);
       setError(null);
       
-      // Find user by email and password
-      const foundUser = DEMO_USERS.find(u => 
-        u.email === email && u.password === password
-      );
-      
-      if (!foundUser) {
-        throw new Error('❌ Invalid email or password. Please try again.');
+      // Try Firebase login first
+      try {
+        const result = await loginWithFirebase(email, password);
+        setLoading(false);
+        return result;
+      } catch (firebaseError) {
+        // If Firebase fails, try demo users
+        console.log('Firebase login failed, trying demo users...');
+        const foundUser = DEMO_USERS.find(u => 
+          u.email === email && u.password === password
+        );
+        
+        if (!foundUser) {
+          throw new Error('❌ Invalid email or password. Please try again.');
+        }
+        
+        // Create user session from demo
+        const userData = {
+          id: foundUser.id,
+          name: foundUser.name,
+          email: foundUser.email,
+          role: foundUser.role,
+          avatar: foundUser.avatar
+        };
+        
+        setUser(userData);
+        setCurrentUser(userData);
+        setUserProfile(userData);
+        setIsAuthenticated(true);
+        localStorage.setItem('auth_user', JSON.stringify(userData));
+        localStorage.setItem('token', 'demo-token-12345');
+        
+        setLoading(false);
+        return { user: userData, message: 'Login successful! (Demo Mode)' };
       }
-      
-      // Create user session
-      const userData = {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-        role: foundUser.role,
-        avatar: foundUser.avatar
-      };
-      
-      setUser(userData);
-      setIsAuthenticated(true);
-      localStorage.setItem('auth_user', JSON.stringify(userData));
-      localStorage.setItem('token', 'demo-token-12345');
-      
-      setLoading(false);
-      return { data: { user: userData, token: 'demo-token-12345' } };
     } catch (err) {
       setError(err.message || 'Login failed');
-      throw err;
-    } finally {
       setLoading(false);
+      throw err;
     }
   };
 
@@ -120,13 +175,13 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Check if email already exists
+      // Check if email already exists in demo users
       const existingUser = DEMO_USERS.find(u => u.email === userData.email);
       if (existingUser) {
         throw new Error('Email already exists. Please login.');
       }
       
-      // Create new user
+      // Create new user in demo
       const newUser = {
         id: DEMO_USERS.length + 1,
         name: userData.name || 'User',
@@ -148,27 +203,41 @@ export const AuthProvider = ({ children }) => {
       };
       
       setUser(userSession);
+      setCurrentUser(userSession);
+      setUserProfile(userSession);
       setIsAuthenticated(true);
       localStorage.setItem('auth_user', JSON.stringify(userSession));
       localStorage.setItem('token', 'demo-token-12345');
       
       setLoading(false);
-      return { data: { user: userSession, token: 'demo-token-12345' } };
+      return { user: userSession, message: 'Account created successfully!' };
     } catch (err) {
       setError(err.message || 'Registration failed');
-      throw err;
-    } finally {
       setLoading(false);
+      throw err;
     }
   };
 
   // ✅ Logout
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // Try Firebase logout
+      await signOut(auth);
+      setUserProfile(null);
+    } catch (error) {
+      console.log('Firebase logout failed, clearing local session...');
+    }
+    
+    // Clear all sessions
     setUser(null);
+    setCurrentUser(null);
+    setUserProfile(null);
     setIsAuthenticated(false);
     setError(null);
     localStorage.removeItem('auth_user');
     localStorage.removeItem('token');
+    
+    return { message: 'Logged out successfully' };
   };
 
   // ✅ Update profile
@@ -179,6 +248,8 @@ export const AuthProvider = ({ children }) => {
       
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
+      setCurrentUser(updatedUser);
+      setUserProfile(updatedUser);
       localStorage.setItem('auth_user', JSON.stringify(updatedUser));
       
       // Update DEMO_USERS array
@@ -188,16 +259,15 @@ export const AuthProvider = ({ children }) => {
       }
       
       setLoading(false);
-      return { data: { user: updatedUser } };
+      return { user: updatedUser, message: 'Profile updated successfully!' };
     } catch (err) {
       setError(err.message || 'Failed to update profile');
-      throw err;
-    } finally {
       setLoading(false);
+      throw err;
     }
   };
 
-  // ✅ Change Password - UPDATED WITH VALIDATION
+  // ✅ Change Password with validation
   const changePassword = async (currentPassword, newPassword) => {
     try {
       setLoading(true);
@@ -228,17 +298,14 @@ export const AuthProvider = ({ children }) => {
       // ✅ Update password in DEMO_USERS
       DEMO_USERS[userIndex].password = newPassword;
       
-      // ✅ Log success
       console.log('✅ Password changed successfully for:', user?.email);
-      console.log('📝 New password:', newPassword);
       
       setLoading(false);
       return { success: true, message: 'Password changed successfully!' };
     } catch (err) {
       setError(err.message || 'Failed to change password');
-      throw err;
-    } finally {
       setLoading(false);
+      throw err;
     }
   };
 
@@ -257,9 +324,8 @@ export const AuthProvider = ({ children }) => {
       return { success: true, message: 'Password reset link sent to your email.' };
     } catch (err) {
       setError(err.message || 'Failed to send reset email');
-      throw err;
-    } finally {
       setLoading(false);
+      throw err;
     }
   };
 
@@ -269,35 +335,71 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       setLoading(false);
-      return { success: true };
+      return { success: true, message: 'Password reset successfully!' };
     } catch (err) {
       setError(err.message || 'Failed to reset password');
-      throw err;
-    } finally {
       setLoading(false);
+      throw err;
     }
   };
 
-  // Get current user
-  const getCurrentUser = () => user;
+  // ✅ Get current user
+  const getCurrentUser = () => {
+    return currentUser || user;
+  };
 
-  // Check if user has role
+  // ✅ Check if user has role
   const hasRole = (role) => {
-    if (!user) return false;
-    if (Array.isArray(role)) {
-      return role.includes(user.role);
-    }
-    return user.role === role;
+    const userData = currentUser || user;
+    return userData?.role === role;
   };
+
+  // ✅ Set up auth state listener (Firebase)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            setUserProfile(userDoc.data());
+            setCurrentUser(firebaseUser);
+            setIsAuthenticated(true);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      } else {
+        // ✅ Check localStorage for demo user
+        const savedUser = localStorage.getItem('auth_user');
+        if (savedUser) {
+          const userData = JSON.parse(savedUser);
+          setUser(userData);
+          setCurrentUser(userData);
+          setUserProfile(userData);
+          setIsAuthenticated(true);
+        } else {
+          setCurrentUser(null);
+          setUserProfile(null);
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      }
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
 
   const value = {
-    user,
+    currentUser: currentUser || user,
+    userProfile: userProfile || user,
     loading,
     error,
     isAuthenticated,
     login,
-    register,
+    signup,
     logout,
+    register,
     updateProfile,
     changePassword,
     forgotPassword,
@@ -309,17 +411,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export default AuthContext;

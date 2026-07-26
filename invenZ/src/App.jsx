@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.jsx - FIXED (Conflict ඉවත් කර ඇත)
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
@@ -48,75 +48,51 @@ function App() {
                 <OrderProvider>
                   <BrowserRouter>
                     <Routes>
-                      {/* ============================================
-                          DASHBOARD
-                          ============================================ */}
+                      {/* Dashboard */}
                       <Route path="/" element={<Layout><Dashboard /></Layout>} />
                       <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
                       
-                      {/* ============================================
-                          CATEGORIES
-                          ============================================ */}
+                      {/* Categories */}
                       <Route path="/categories" element={<Layout><Categories /></Layout>} />
                       
-                      {/* ============================================
-                          CHARTS
-                          ============================================ */}
+                      {/* Charts */}
                       <Route path="/charts" element={<Layout><Charts /></Layout>} />
                       
-                      {/* ============================================
-                          PROFILE
-                          ============================================ */}
+                      {/* Profile */}
                       <Route path="/settings/profile" element={<Layout><Profile /></Layout>} />
                       
-                      {/* ============================================
-                          PRODUCTS
-                          ============================================ */}
+                      {/* Products */}
                       <Route path="/products" element={<Layout><Products /></Layout>} />
                       <Route path="/products/add" element={<Layout><AddProduct /></Layout>} />
                       <Route path="/products/edit/:id" element={<Layout><EditProduct /></Layout>} />
                       <Route path="/products/:id" element={<Layout><ProductDetails /></Layout>} />
                       
-                      {/* ============================================
-                          SUPPLIERS
-                          ============================================ */}
+                      {/* Suppliers */}
                       <Route path="/suppliers" element={<Layout><Suppliers /></Layout>} />
                       <Route path="/suppliers/add" element={<Layout><AddSupplier /></Layout>} />
                       <Route path="/suppliers/:id" element={<Layout><SupplierDetails /></Layout>} />
                       
-                      {/* ============================================
-                          STOCK
-                          ============================================ */}
+                      {/* Stock */}
                       <Route path="/stock" element={<Layout><Stock /></Layout>} />
                       <Route path="/stock/movements" element={<Layout><StockMovements /></Layout>} />
                       
-                      {/* ============================================
-                          ORDERS
-                          ============================================ */}
+                      {/* Orders */}
                       <Route path="/orders" element={<Layout><Orders /></Layout>} />
                       <Route path="/orders/purchase" element={<Layout><PurchaseOrders /></Layout>} />
                       <Route path="/orders/sales" element={<Layout><SalesOrders /></Layout>} />
                       
-                      {/* ============================================
-                          REPORTS
-                          ============================================ */}
+                      {/* Reports */}
                       <Route path="/reports" element={<Layout><Reports /></Layout>} />
                       
-                      {/* ============================================
-                          SETTINGS
-                          ============================================ */}
+                      {/* Settings */}
                       <Route path="/settings" element={<Layout><Settings /></Layout>} />
                       
-                      {/* ============================================
-                          AUTH (Public Routes)
-                          ============================================ */}
+                      {/* Auth */}
                       <Route path="/login" element={<Login />} />
                       <Route path="/register" element={<Register />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />
                       
-                      {/* ============================================
-                          404 NOT FOUND
-                          ============================================ */}
+                      {/* 404 */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </BrowserRouter>

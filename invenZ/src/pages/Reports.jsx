@@ -1,12 +1,9 @@
-// src/pages/Reports.jsx - DEMO MODE (No Backend)
+// src/pages/Reports.jsx - WITH ERROR HANDLING
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import Card from '../components/common/Card';
 import './Reports.css';
 
+// ✅ Dynamic imports with error handling
 const Reports = () => {
   const navigate = useNavigate();
   const [reportType, setReportType] = useState('sales');
@@ -16,11 +13,13 @@ const Reports = () => {
   });
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState(null);
+  const [exportError, setExportError] = useState(null);
 
   // ✅ DEMO DATA - Backend නැතුව වැඩ කරයි
   const reportDataMap = {
     sales: {
       title: 'Sales Report',
+      icon: '📊',
       columns: ['ID', 'Product', 'Quantity', 'Amount', 'Date'],
       data: [
         { id: 1, product: 'Premium Rice', quantity: 50, amount: 7500, date: '2026-07-20' },
@@ -32,49 +31,57 @@ const Reports = () => {
     },
     stock: {
       title: 'Stock Report',
+      icon: '📦',
       columns: ['ID', 'Product', 'Category', 'Current Stock', 'Min Stock', 'Status'],
       data: [
         { id: 1, product: 'Premium Rice', category: 'Food', currentStock: 45, minStock: 10, status: 'In Stock' },
         { id: 2, product: 'Sugar', category: 'Food', currentStock: 8, minStock: 10, status: 'Low Stock' },
         { id: 3, product: 'Laptop', category: 'Electronics', currentStock: 2, minStock: 5, status: 'Critical' },
-        { id: 4, product: 'Wheat Flour', category: 'Food', currentStock: 45, minStock: 15, status: 'In Stock' }
+        { id: 4, product: 'Wheat Flour', category: 'Food', currentStock: 45, minStock: 15, status: 'In Stock' },
+        { id: 5, product: 'Office Chair', category: 'Furniture', currentStock: 20, minStock: 5, status: 'In Stock' }
       ]
     },
     suppliers: {
       title: 'Supplier Report',
+      icon: '🏢',
       columns: ['ID', 'Supplier', 'Contact', 'Email', 'Products', 'Rating'],
       data: [
         { id: 1, supplier: 'Tech Distributors Ltd', contact: 'Mr. Kumar', email: 'tech@dist.com', products: 15, rating: 4.5 },
         { id: 2, supplier: 'Food Supply Co.', contact: 'Mrs. Perera', email: 'food@supply.com', products: 25, rating: 4.8 },
-        { id: 3, supplier: 'Fashion Hub', contact: 'Ms. Silva', email: 'fashion@hub.com', products: 8, rating: 4.2 }
+        { id: 3, supplier: 'Fashion Hub', contact: 'Ms. Silva', email: 'fashion@hub.com', products: 8, rating: 4.2 },
+        { id: 4, supplier: 'Fresh Foods', contact: 'Mr. Jayasinghe', email: 'fresh@foods.com', products: 12, rating: 4.6 }
       ]
     },
     profit: {
       title: 'Profit Report',
+      icon: '💰',
       columns: ['ID', 'Product', 'Purchase Price', 'Selling Price', 'Profit', 'Margin %'],
       data: [
         { id: 1, product: 'Premium Rice', purchasePrice: 120, sellingPrice: 150, profit: 30, margin: 25 },
         { id: 2, product: 'Sugar', purchasePrice: 80, sellingPrice: 100, profit: 20, margin: 25 },
         { id: 3, product: 'Laptop', purchasePrice: 45000, sellingPrice: 55000, profit: 10000, margin: 22 },
-        { id: 4, product: 'Wheat Flour', purchasePrice: 90, sellingPrice: 120, profit: 30, margin: 33 }
+        { id: 4, product: 'Wheat Flour', purchasePrice: 90, sellingPrice: 120, profit: 30, margin: 33 },
+        { id: 5, product: 'Office Chair', purchasePrice: 15000, sellingPrice: 25000, profit: 10000, margin: 40 }
       ]
     }
   };
 
   const reportTypes = [
-    { id: 'sales', label: '📊 Sales Report', icon: '📊' },
-    { id: 'stock', label: '📦 Stock Report', icon: '📦' },
-    { id: 'suppliers', label: '🏢 Supplier Report', icon: '🏢' },
-    { id: 'profit', label: '💰 Profit Report', icon: '💰' }
+    { id: 'sales', label: 'Sales Report', icon: '📊' },
+    { id: 'stock', label: 'Stock Report', icon: '📦' },
+    { id: 'suppliers', label: 'Supplier Report', icon: '🏢' },
+    { id: 'profit', label: 'Profit Report', icon: '💰' }
   ];
 
   // ✅ Generate Report - Demo Data
   const handleGenerate = () => {
     setLoading(true);
+    setExportError(null);
     setTimeout(() => {
       const data = reportDataMap[reportType];
       setReportData({
         title: data.title,
+        icon: data.icon,
         generated: new Date().toLocaleString(),
         columns: data.columns,
         data: data.data,
@@ -84,14 +91,17 @@ const Reports = () => {
     }, 500);
   };
 
-  // ✅ Export to Excel
-  const exportToExcel = () => {
+  // ✅ Export to Excel with error handling
+  const exportToExcel = async () => {
     if (!reportData) {
       alert('Please generate a report first!');
       return;
     }
 
     try {
+      // Dynamic import for xlsx
+      const XLSX = await import('xlsx');
+      
       const excelData = reportData.data.map(item => {
         const row = {};
         reportData.columns.forEach(col => {
@@ -105,6 +115,7 @@ const Reports = () => {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Report');
 
+      // Auto column widths
       const colWidths = [];
       reportData.columns.forEach((col, index) => {
         let maxLen = col.length;
@@ -120,18 +131,26 @@ const Reports = () => {
       alert('✅ Excel file downloaded successfully!');
     } catch (error) {
       console.error('Excel export error:', error);
-      alert('❌ Failed to export Excel');
+      setExportError('Failed to export Excel. Please make sure xlsx package is installed.');
+      alert('❌ Failed to export Excel. Please install xlsx package: npm install xlsx');
     }
   };
 
-  // ✅ Export to PDF
-  const exportToPDF = () => {
+  // ✅ Export to PDF with error handling
+  const exportToPDF = async () => {
     if (!reportData) {
       alert('⚠️ Please generate a report first!');
       return;
     }
 
     try {
+      // Dynamic imports for pdf libraries
+      const jsPDFModule = await import('jspdf');
+      const autoTableModule = await import('jspdf-autotable');
+      
+      const jsPDF = jsPDFModule.default;
+      const autoTable = autoTableModule.default;
+
       const doc = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -142,9 +161,9 @@ const Reports = () => {
       const pageHeight = doc.internal.pageSize.getHeight();
 
       // Header
-      doc.setFontSize(18);
+      doc.setFontSize(20);
       doc.setTextColor('#1B5E20');
-      doc.text(`InvenZ - ${reportData.title}`, 14, 20);
+      doc.text(`${reportData.icon} InvenZ - ${reportData.title}`, 14, 20);
 
       doc.setFontSize(10);
       doc.setTextColor('#666');
@@ -221,7 +240,8 @@ const Reports = () => {
 
     } catch (error) {
       console.error('PDF export error:', error);
-      alert('❌ Failed to export PDF. Error: ' + error.message);
+      setExportError('Failed to export PDF. Please make sure jspdf and jspdf-autotable are installed.');
+      alert('❌ Failed to export PDF. Please install: npm install jspdf jspdf-autotable');
     }
   };
 
@@ -232,6 +252,11 @@ const Reports = () => {
       <div className="page-header">
         <h1>📋 Reports</h1>
         <p>Generate and view reports for your business</p>
+        {exportError && (
+          <div className="error-banner">
+            <span>⚠️</span> {exportError}
+          </div>
+        )}
       </div>
 
       <div className="report-controls">
@@ -242,7 +267,8 @@ const Reports = () => {
               className={`report-type-btn ${reportType === type.id ? 'active' : ''}`}
               onClick={() => setReportType(type.id)}
             >
-              {type.icon} {type.label}
+              <span className="report-icon">{type.icon}</span>
+              {type.label}
             </button>
           ))}
         </div>
@@ -271,18 +297,28 @@ const Reports = () => {
       </div>
 
       {reportData && (
-        <Card title={`📄 ${reportData.title}`} className="report-card">
-          <div className="report-meta">
-            <span>Generated: {reportData.generated}</span>
-            <span>Total Records: {reportData.total}</span>
+        <div className="report-card">
+          <div className="report-card-header">
+            <div className="report-title-section">
+              <span className="report-icon-large">{reportData.icon}</span>
+              <div>
+                <h2>{reportData.title}</h2>
+                <p>Generated: {reportData.generated}</p>
+              </div>
+            </div>
             <div className="report-actions">
-              <button className="btn-sm btn-excel" onClick={exportToExcel}>
+              <button className="btn-excel" onClick={exportToExcel}>
                 📥 Export Excel
               </button>
-              <button className="btn-sm btn-pdf" onClick={exportToPDF}>
+              <button className="btn-pdf" onClick={exportToPDF}>
                 📄 Export PDF
               </button>
             </div>
+          </div>
+
+          <div className="report-meta">
+            <span>📊 Total Records: <strong>{reportData.total}</strong></span>
+            <span>📅 Report Type: <strong>{reportData.title}</strong></span>
           </div>
 
           <div className="report-table-wrapper">
@@ -301,6 +337,7 @@ const Reports = () => {
                       const key = col.toLowerCase().replace(/ /g, '_');
                       let value = item[key] || item[col.toLowerCase()] || '';
                       
+                      // Format numbers
                       if (typeof value === 'number' && 
                           (col.toLowerCase().includes('price') || 
                            col.toLowerCase().includes('amount') || 
@@ -309,10 +346,12 @@ const Reports = () => {
                         value = `Rs. ${value.toLocaleString()}`;
                       }
                       
+                      // Format dates
                       if (col.toLowerCase().includes('date') && value) {
                         value = new Date(value).toLocaleDateString();
                       }
                       
+                      // Status badges
                       if (col.toLowerCase().includes('status')) {
                         const statusClass = value.toLowerCase().replace(/ /g, '-');
                         return (
@@ -324,9 +363,12 @@ const Reports = () => {
                         );
                       }
                       
+                      // Rating stars
                       if (col.toLowerCase().includes('rating')) {
-                        const stars = '⭐'.repeat(Math.round(value)) + '☆'.repeat(5 - Math.round(value));
-                        return <td key={colIndex}>{stars}</td>;
+                        const fullStars = Math.round(value);
+                        const emptyStars = 5 - fullStars;
+                        const stars = '⭐'.repeat(fullStars) + '☆'.repeat(emptyStars);
+                        return <td key={colIndex} className="rating-cell">{stars}</td>;
                       }
                       
                       return <td key={colIndex}>{value}</td>;
@@ -341,7 +383,7 @@ const Reports = () => {
             <span>Generated by InvenZ v1.0.0</span>
             <span>© {new Date().getFullYear()} InvenZ - Smart Inventory Management</span>
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );

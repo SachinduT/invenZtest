@@ -2,12 +2,11 @@
 import React, { useState } from 'react';
 import './ProductForm.css';
 
-const ProductForm = ({
-  initialData = null,
-  onSubmit,
+const ProductForm = ({ 
+  initialData = null, 
+  onSubmit, 
   onCancel,
   categories = [],
-  suppliers = [],
   loading = false
 }) => {
   const [formData, setFormData] = useState({
@@ -45,25 +44,17 @@ const ProductForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ IMPORTANT: handleSubmit with e.preventDefault()
   const handleSubmit = (e) => {
-    e.preventDefault();  // ✅ මෙය අනිවාර්යයි!
-    
-    console.log('🔄 Form submitted!');
-    
+    e.preventDefault();
     if (validate()) {
-      const submitData = {
+      onSubmit({
         ...formData,
         purchasePrice: parseFloat(formData.purchasePrice) || 0,
         sellingPrice: parseFloat(formData.sellingPrice) || 0,
         currentStock: parseInt(formData.currentStock) || 0,
         minStock: parseInt(formData.minStock) || 0,
         maxStock: parseInt(formData.maxStock) || 0
-      };
-      console.log('📤 Submitting data:', submitData);
-      onSubmit(submitData);
-    } else {
-      console.log('❌ Validation errors:', errors);
+      });
     }
   };
 
@@ -107,8 +98,8 @@ const ProductForm = ({
           >
             <option value="">Select Category</option>
             {categories.map(cat => (
-              <option key={cat.id} value={cat.name}>
-                {cat.name}
+              <option key={cat.id || cat} value={cat.name || cat}>
+                {cat.name || cat}
               </option>
             ))}
           </select>
