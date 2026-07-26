@@ -6,7 +6,7 @@ import './Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { currentUser, userProfile, isAuthenticated, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -133,6 +133,12 @@ const Header = () => {
     navigate(path);
   };
 
+  const profileUser = currentUser || userProfile || {};
+  const displayName = profileUser.name || profileUser.displayName || 'Admin';
+  const displayRole = profileUser.role || 'Administrator';
+  const displayEmail = profileUser.email || 'admin@invenz.com';
+  const displayAvatar = profileUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1B5E20&color=fff&bold=true&size=40`;
+
   // Get notification icon based on type
   const getNotificationIcon = (type) => {
     switch(type) {
@@ -254,13 +260,13 @@ const Header = () => {
                 onClick={handleProfileClick}
               >
                 <img
-                  src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=1B5E20&color=fff&bold=true&size=40`}
+                  src={displayAvatar}
                   alt="User"
                   className="user-avatar-modern"
                 />
                 <div className="user-info-modern">
-                  <span className="user-name-modern">{user?.name || 'Admin'}</span>
-                  <span className="user-role-modern">{user?.role || 'Administrator'}</span>
+                  <span className="user-name-modern">{displayName}</span>
+                  <span className="user-role-modern">{displayRole}</span>
                 </div>
                 <span className="dropdown-arrow">▼</span>
               </div>
@@ -270,14 +276,14 @@ const Header = () => {
                 <div className="profile-dropdown">
                   <div className="profile-dropdown-header">
                     <img
-                      src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=1B5E20&color=fff&bold=true&size=60`}
+                      src={displayAvatar}
                       alt="User"
                       className="profile-dropdown-avatar"
                     />
                     <div className="profile-dropdown-info">
-                      <div className="profile-dropdown-name">{user?.name || 'Admin'}</div>
-                      <div className="profile-dropdown-email">{user?.email || 'admin@invenz.com'}</div>
-                      <span className="profile-dropdown-role">{user?.role || 'Administrator'}</span>
+                      <div className="profile-dropdown-name">{displayName}</div>
+                      <div className="profile-dropdown-email">{displayEmail}</div>
+                      <span className="profile-dropdown-role">{displayRole}</span>
                     </div>
                   </div>
 
