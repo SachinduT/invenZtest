@@ -18,24 +18,36 @@ import { auth } from '../firebase/config';
 // Collection reference
 const productsCollection = collection(db, 'products');
 
-// Add new product
+// Add new product to Firebase
 export const addProduct = async (productData) => {
   try {
     const user = auth.currentUser;
     if (!user) throw new Error('User must be logged in to add products');
 
     const product = {
-      ...productData,
+      name: productData.name,
+      sku: productData.sku,
+      category: productData.category,
+      supplier: productData.supplier || '',
+      description: productData.description || '',
+      purchasePrice: parseFloat(productData.purchasePrice) || 0,
+      sellingPrice: parseFloat(productData.sellingPrice) || 0,
+      currentStock: parseInt(productData.currentStock) || 0,
+      minStock: parseInt(productData.minStock) || 5,
+      maxStock: parseInt(productData.maxStock) || 100,
+      unit: productData.unit || 'pcs',
+      status: 'active',
+      totalSales: 0,
+      totalPurchases: 0,
       createdBy: user.uid,
       createdByEmail: user.email,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      status: 'active',
-      totalSales: 0,
-      totalPurchases: 0
+      updatedAt: serverTimestamp()
     };
 
     const docRef = await addDoc(productsCollection, product);
+    console.log('✅ Product added with ID:', docRef.id);
+    
     return { 
       id: docRef.id, 
       ...product,
@@ -43,12 +55,12 @@ export const addProduct = async (productData) => {
       updatedAt: new Date().toISOString()
     };
   } catch (error) {
-    console.error('Error adding product:', error);
+    console.error('❌ Error adding product:', error);
     throw new Error(getErrorMessage(error.code));
   }
 };
 
-// Get all products
+// Get all products from Firebase
 export const getProducts = async (filters = {}) => {
   try {
     let q = query(productsCollection, orderBy('createdAt', 'desc'));
@@ -79,9 +91,10 @@ export const getProducts = async (filters = {}) => {
       );
     }
     
+    console.log('✅ Products loaded:', products.length);
     return products;
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('❌ Error fetching products:', error);
     throw new Error('Failed to load products');
   }
 };
@@ -103,7 +116,7 @@ export const getProductById = async (productId) => {
       throw new Error('Product not found');
     }
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('❌ Error fetching product:', error);
     throw new Error('Failed to load product details');
   }
 };
@@ -116,7 +129,17 @@ export const updateProduct = async (productId, productData) => {
 
     const docRef = doc(db, 'products', productId);
     const product = {
-      ...productData,
+      name: productData.name,
+      sku: productData.sku,
+      category: productData.category,
+      supplier: productData.supplier || '',
+      description: productData.description || '',
+      purchasePrice: parseFloat(productData.purchasePrice) || 0,
+      sellingPrice: parseFloat(productData.sellingPrice) || 0,
+      currentStock: parseInt(productData.currentStock) || 0,
+      minStock: parseInt(productData.minStock) || 5,
+      maxStock: parseInt(productData.maxStock) || 100,
+      unit: productData.unit || 'pcs',
       updatedAt: serverTimestamp(),
       updatedBy: user.uid,
       updatedByEmail: user.email
@@ -125,7 +148,7 @@ export const updateProduct = async (productId, productData) => {
     await updateDoc(docRef, product);
     return { id: productId, ...product };
   } catch (error) {
-    console.error('Error updating product:', error);
+    console.error('❌ Error updating product:', error);
     throw new Error(getErrorMessage(error.code));
   }
 };
@@ -140,73 +163,8 @@ export const deleteProduct = async (productId) => {
     await deleteDoc(docRef);
     return { id: productId, message: 'Product deleted successfully' };
   } catch (error) {
-    console.error('Error deleting product:', error);
+    console.error('❌ Error deleting product:', error);
     throw new Error('Failed to delete product');
-  }
-};
-
-// Get products by category
-export const getProductsByCategory = async (category) => {
-  try {
-    const q = query(productsCollection, where('category', '==', category));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-  } catch (error) {
-    console.error('Error fetching products by category:', error);
-    throw new Error('Failed to load products by category');
-  }
-};
-
-// Get low stock products
-export const getLowStockProducts = async () => {
-  try {
-    const querySnapshot = await getDocs(productsCollection);
-    const products = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-    
-    return products.filter(product => {
-      const currentStock = Number(product.currentStock) || 0;
-      const minStock = Number(product.minStock) || 5;
-      return currentStock <= minStock;
-    });
-  } catch (error) {
-    console.error('Error fetching low stock products:', error);
-    return [];
-  }
-};
-
-// Get products by stock level threshold
-export const getProductsByStockLevel = async (threshold = 5) => {
-  try {
-    const q = query(productsCollection, where('currentStock', '<=', threshold));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-  } catch (error) {
-    console.error('Error fetching products by stock level:', error);
-    throw new Error('Failed to load products by stock level');
-  }
-};
-
-// Get out of stock products
-export const getOutOfStockProducts = async () => {
-  try {
-    const q = query(productsCollection, where('currentStock', '==', 0));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-  } catch (error) {
-    console.error('Error fetching out of stock products:', error);
-    throw new Error('Failed to load out of stock products');
   }
 };
 
@@ -220,50 +178,10 @@ export const updateStock = async (productId, newStock) => {
     });
     return { id: productId, currentStock: newStock };
   } catch (error) {
-    console.error('Error updating stock:', error);
+    console.error('❌ Error updating stock:', error);
     throw new Error('Failed to update stock');
   }
 };
-
-// Bulk update stock
-export const bulkUpdateStock = async (updates) => {
-  try {
-    const batch = [];
-    for (const { id, stock } of updates) {
-      const docRef = doc(db, 'products', id);
-      batch.push(updateDoc(docRef, {
-        currentStock: stock,
-        updatedAt: serverTimestamp()
-      }));
-    }
-    await Promise.all(batch);
-    return { message: `${updates.length} products updated successfully` };
-  } catch (error) {
-    console.error('Error bulk updating stock:', error);
-    throw new Error('Failed to bulk update stock');
-  }
-};
-
-// ✅ CREATE THE productService OBJECT WITH ALL FUNCTIONS
-const productService = {
-  addProduct,
-  getProducts,
-  getProductById,
-  updateProduct,
-  deleteProduct,
-  getProductsByCategory,
-  getLowStockProducts,
-  getProductsByStockLevel,
-  getOutOfStockProducts,
-  updateStock,
-  bulkUpdateStock
-};
-
-// ✅ EXPORT productService as a named export
-export { productService };
-
-// ✅ Also export the default export
-export default productService;
 
 // Helper function for error messages
 const getErrorMessage = (errorCode) => {
@@ -275,3 +193,16 @@ const getErrorMessage = (errorCode) => {
   };
   return errorMessages[errorCode] || 'An error occurred. Please try again.';
 };
+
+// ✅ Export all functions
+const productService = {
+  addProduct,
+  getProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct,
+  updateStock
+};
+
+export { productService };
+export default productService;

@@ -13,23 +13,6 @@ const AddProduct = () => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const [useMockCategories, setUseMockCategories] = useState(false);
-
-  // ✅ MOCK CATEGORIES - Fallback if Firebase categories don't exist
-  const mockCategories = [
-    { id: 'mock-1', name: 'Electronics' },
-    { id: 'mock-2', name: 'Clothing' },
-    { id: 'mock-3', name: 'Food & Beverages' },
-    { id: 'mock-4', name: 'Furniture' },
-    { id: 'mock-5', name: 'Stationery' },
-    { id: 'mock-6', name: 'Books' },
-    { id: 'mock-7', name: 'Sports & Outdoors' },
-    { id: 'mock-8', name: 'Automotive' },
-    { id: 'mock-9', name: 'Health & Beauty' },
-    { id: 'mock-10', name: 'Home & Garden' },
-    { id: 'mock-11', name: 'Toys & Games' },
-    { id: 'mock-12', name: 'Office Supplies' }
-  ];
 
   // Load categories from Firebase
   useEffect(() => {
@@ -37,36 +20,31 @@ const AddProduct = () => {
       try {
         setLoadingCategories(true);
         const categoriesData = await getCategories();
-        console.log('📂 Categories loaded from Firebase:', categoriesData);
+        console.log('📂 Categories loaded:', categoriesData);
         
         if (categoriesData && categoriesData.length > 0) {
           setCategories(categoriesData);
-          setUseMockCategories(false);
         } else {
-          // ✅ Use mock categories if no categories in Firebase
-          console.log('📂 No categories in Firebase, using mock categories');
-          setCategories(mockCategories);
-          setUseMockCategories(true);
+          setCategories([]);
         }
       } catch (err) {
         console.error('❌ Error loading categories:', err);
-        // ✅ Use mock categories on error
-        setCategories(mockCategories);
-        setUseMockCategories(true);
-        showError('Using sample categories. Add real categories in Firebase.');
+        setCategories([]);
       } finally {
         setLoadingCategories(false);
       }
     };
     loadCategories();
-  }, [showError]);
+  }, []);
 
   const handleSubmit = async (productData) => {
     try {
       setLoading(true);
+      console.log('📦 Adding product:', productData);
       
-      // Add product to Firebase
+      // ✅ Add product to Firebase
       const newProduct = await addProduct(productData);
+      console.log('✅ Product added successfully:', newProduct);
       
       // Show success message
       success({
@@ -81,12 +59,12 @@ const AddProduct = () => {
       }, 500);
       
     } catch (error) {
+      console.error('❌ Error adding product:', error);
       showError({
         title: '❌ Failed to Add Product',
         message: error.message || 'Please check your connection and try again.',
         duration: 5000
       });
-      console.error('Error adding product:', error);
     } finally {
       setLoading(false);
     }
@@ -110,14 +88,6 @@ const AddProduct = () => {
       <div className="page-header">
         <h1>Add New Product</h1>
         <p>Fill in the details to add a new product to your inventory</p>
-        {useMockCategories && (
-          <div className="info-banner">
-            <span className="info-icon">ℹ️</span>
-            <span className="info-text">
-              Using sample categories. You can add your own categories in Firebase Console.
-            </span>
-          </div>
-        )}
         <div className="category-count">
           <span className="count-badge">
             📂 {categories.length} Categories Available

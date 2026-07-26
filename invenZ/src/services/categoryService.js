@@ -9,7 +9,6 @@ import {
   getDoc, 
   getDocs, 
   query, 
-  where, 
   orderBy,
   serverTimestamp 
 } from 'firebase/firestore';
@@ -20,41 +19,33 @@ const categoriesCollection = collection(db, 'categories');
 // Get all categories
 export const getCategories = async () => {
   try {
+    console.log('🔍 Fetching categories from Firebase...');
     const q = query(categoriesCollection, orderBy('name', 'asc'));
     const querySnapshot = await getDocs(q);
-    const categories = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-      updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
-    }));
+    
+    if (querySnapshot.empty) {
+      console.log('📭 No categories found');
+      return [];
+    }
+    
+    const categories = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name || 'Unnamed',
+        description: data.description || '',
+        icon: data.icon || '📦',
+        color: data.color || '#1B5E20',
+        count: data.count || 0,
+        ...data
+      };
+    });
+    
     console.log('✅ Categories loaded:', categories.length);
     return categories;
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    console.error('❌ Error fetching categories:', error);
     return [];
-  }
-};
-
-// Get single category by ID
-export const getCategoryById = async (categoryId) => {
-  try {
-    const docRef = doc(db, 'categories', categoryId);
-    const docSnap = await getDoc(docRef);
-    
-    if (docSnap.exists()) {
-      return {
-        id: docSnap.id,
-        ...docSnap.data(),
-        createdAt: docSnap.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-        updatedAt: docSnap.data().updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
-      };
-    } else {
-      throw new Error('Category not found');
-    }
-  } catch (error) {
-    console.error('Error fetching category:', error);
-    throw new Error('Failed to load category');
   }
 };
 
@@ -62,20 +53,13 @@ export const getCategoryById = async (categoryId) => {
 export const addCategory = async (categoryData) => {
   try {
     const user = auth.currentUser;
-    if (!user) throw new Error('User must be logged in to add categories');
-
-    // Check if category with same name exists
-    const existingCategories = await getCategories();
-    const exists = existingCategories.some(c => 
-      c.name.toLowerCase() === categoryData.name.toLowerCase()
-    );
-    
-    if (exists) {
-      throw new Error('A category with this name already exists');
-    }
+    if (!user) throw new Error('User must be logged in');
 
     const category = {
-      ...categoryData,
+      name: categoryData.name,
+      description: categoryData.description || '',
+      icon: categoryData.icon || '📦',
+      color: categoryData.color || '#1B5E20',
       count: 0,
       createdBy: user.uid,
       createdByEmail: user.email,
@@ -84,12 +68,7 @@ export const addCategory = async (categoryData) => {
     };
 
     const docRef = await addDoc(categoriesCollection, category);
-    return { 
-      id: docRef.id, 
-      ...category,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    return { id: docRef.id, ...category };
   } catch (error) {
     console.error('Error adding category:', error);
     throw new Error(error.message || 'Failed to add category');
@@ -100,23 +79,14 @@ export const addCategory = async (categoryData) => {
 export const updateCategory = async (categoryId, categoryData) => {
   try {
     const user = auth.currentUser;
-    if (!user) throw new Error('User must be logged in to update categories');
+    if (!user) throw new Error('User must be logged in');
 
     const docRef = doc(db, 'categories', categoryId);
-    
-    // Check if another category with same name exists
-    const existingCategories = await getCategories();
-    const exists = existingCategories.some(c => 
-      c.id !== categoryId && 
-      c.name.toLowerCase() === categoryData.name.toLowerCase()
-    );
-    
-    if (exists) {
-      throw new Error('A category with this name already exists');
-    }
-
     const category = {
-      ...categoryData,
+      name: categoryData.name,
+      description: categoryData.description || '',
+      icon: categoryData.icon || '📦',
+      color: categoryData.color || '#1B5E20',
       updatedAt: serverTimestamp(),
       updatedBy: user.uid,
       updatedByEmail: user.email
@@ -134,7 +104,7 @@ export const updateCategory = async (categoryId, categoryData) => {
 export const deleteCategory = async (categoryId) => {
   try {
     const user = auth.currentUser;
-    if (!user) throw new Error('User must be logged in to delete categories');
+    if (!user) throw new Error('User must be logged in');
 
     const docRef = doc(db, 'categories', categoryId);
     await deleteDoc(docRef);
@@ -145,31 +115,28 @@ export const deleteCategory = async (categoryId) => {
   }
 };
 
-// Get categories with product counts
-export const getCategoriesWithCounts = async () => {
+// Get category by ID
+export const getCategoryById = async (categoryId) => {
   try {
-    // Get all categories
-    const categories = await getCategories();
+    const docRef = doc(db, 'categories', categoryId);
+    const docSnap = await getDoc(docRef);
     
-    // Get all products to count per category
-    const { getProducts } = await import('./productService');
-    const products = await getProducts();
-    
-    // Count products per category
-    const categoryCounts = {};
-    products.forEach(product => {
-      if (product.category) {
-        categoryCounts[product.category] = (categoryCounts[product.category] || 0) + 1;
-      }
-    });
-    
-    // Add count to each category
-    return categories.map(category => ({
-      ...category,
-      count: categoryCounts[category.name] || 0
-    }));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        name: data.name || 'Unnamed',
+        description: data.description || '',
+        icon: data.icon || '📦',
+        color: data.color || '#1B5E20',
+        count: data.count || 0,
+        ...data
+      };
+    } else {
+      throw new Error('Category not found');
+    }
   } catch (error) {
-    console.error('Error getting categories with counts:', error);
-    return [];
+    console.error('Error fetching category:', error);
+    throw new Error('Failed to load category');
   }
 };

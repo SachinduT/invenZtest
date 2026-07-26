@@ -1,16 +1,13 @@
-// src/pages/Products.jsx - MODERN REDESIGN WITH FIREBASE
+// src/pages/Products.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { getProducts, deleteProduct } from '../services/productService';
-import ProductForm from '../components/products/ProductForm';
-import ProductDetails from '../components/products/ProductDetails';
 import './Products.css';
 
 const Products = () => {
   const navigate = useNavigate();
   const { success, error: showError } = useNotification();
-  
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,11 +15,6 @@ const Products = () => {
   const [categories, setCategories] = useState([]);
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState('grid');
-  const [totalCount, setTotalCount] = useState(0);
-  const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [viewingProduct, setViewingProduct] = useState(null);
-  const [formLoading, setFormLoading] = useState(false);
 
   // Load products from Firebase
   useEffect(() => {
@@ -33,69 +25,31 @@ const Products = () => {
     try {
       setLoading(true);
       const productsData = await getProducts();
+      console.log('✅ Products loaded:', productsData.length);
       setProducts(productsData);
-      setTotalCount(productsData.length);
       
       // Extract unique categories
       const uniqueCategories = [...new Set(productsData.map(p => p.category).filter(Boolean))];
       setCategories(uniqueCategories);
     } catch (error) {
+      console.error('❌ Error loading products:', error);
       showError('Failed to load products');
-      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAdd = () => {
-    setEditingProduct(null);
-    setShowForm(true);
-  };
-
-  const handleEdit = (product) => {
-    setEditingProduct(product);
-    setShowForm(true);
-  };
-
-  const handleView = async (product) => {
-    try {
-      setViewingProduct(product);
-    } catch (err) {
-      showError('Failed to load product details');
-    }
-  };
-
   const handleDelete = async (product) => {
     if (!window.confirm(`Are you sure you want to delete "${product.name}"?`)) return;
+    
     try {
       await deleteProduct(product.id);
       success(`✅ "${product.name}" has been deleted successfully`);
-      loadProducts();
+      await loadProducts(); // Reload products
     } catch (error) {
+      console.error('❌ Error deleting product:', error);
       showError('Failed to delete product');
-      console.error(error);
     }
-  };
-
-  const handleFormSubmit = async (data) => {
-    try {
-      setFormLoading(true);
-      // In a real app, you would call updateProduct or createProduct here
-      // For now, we'll just reload the products
-      success(editingProduct ? 'Product updated successfully!' : 'Product added successfully!');
-      setShowForm(false);
-      setEditingProduct(null);
-      await loadProducts();
-    } catch (err) {
-      showError(err.message || 'Failed to save product');
-    } finally {
-      setFormLoading(false);
-    }
-  };
-
-  const handleFormCancel = () => {
-    setShowForm(false);
-    setEditingProduct(null);
   };
 
   // Filter and Sort Products
@@ -129,41 +83,9 @@ const Products = () => {
   };
 
   // Calculate stats
+  const totalCount = products.length;
   const lowStockCount = products.filter(p => (p.currentStock || 0) <= (p.minStock || 0)).length;
   const outOfStockCount = products.filter(p => (p.currentStock || 0) === 0).length;
-
-  // View Product Details
-  if (viewingProduct) {
-    return (
-      <ProductDetails
-        product={viewingProduct}
-        onClose={() => setViewingProduct(null)}
-        onEdit={() => {
-          setViewingProduct(null);
-          handleEdit(viewingProduct);
-        }}
-      />
-    );
-  }
-
-  // Add/Edit Product Form
-  if (showForm) {
-    return (
-      <div className="products-page-modern">
-        <div className="page-header-modern">
-          <h1>{editingProduct ? '✏️ Edit Product' : '📦 Add New Product'}</h1>
-          <p>{editingProduct ? 'Update product details' : 'Fill in the details to add a new product'}</p>
-        </div>
-        <ProductForm
-          initialData={editingProduct}
-          onSubmit={handleFormSubmit}
-          onCancel={handleFormCancel}
-          categories={categories}
-          loading={formLoading}
-        />
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -182,7 +104,7 @@ const Products = () => {
           <h1>📦 Products</h1>
           <p>Manage your product inventory</p>
         </div>
-        <button className="btn-add-modern" onClick={handleAdd}>
+        <button className="btn-add-modern" onClick={() => navigate('/products/add')}>
           <span>➕</span> Add Product
         </button>
       </div>
@@ -190,7 +112,7 @@ const Products = () => {
       {/* Stats Bar */}
       <div className="stats-bar-modern">
         <div className="stat-item">
-          <span className="stat-number">{totalCount || 0}</span>
+          <span className="stat-number">{totalCount}</span>
           <span className="stat-label">Total Products</span>
         </div>
         <div className="stat-item">
@@ -280,7 +202,7 @@ const Products = () => {
           <span className="empty-icon">📭</span>
           <h3>No products found</h3>
           <p>Try adjusting your filters or add a new product</p>
-          <button className="btn-add-modern" onClick={handleAdd}>
+          <button className="btn-add-modern" onClick={() => navigate('/products/add')}>
             + Add Product
           </button>
         </div>
@@ -309,14 +231,14 @@ const Products = () => {
                   <div className="list-item-actions">
                     <button 
                       className="btn-view" 
-                      onClick={() => handleView(product)}
+                      onClick={() => navigate(`/products/${product.id}`)}
                       title="View Details"
                     >
                       👁️
                     </button>
                     <button 
                       className="btn-edit" 
-                      onClick={() => handleEdit(product)}
+                      onClick={() => navigate(`/products/edit/${product.id}`)}
                       title="Edit"
                     >
                       ✏️
@@ -338,7 +260,7 @@ const Products = () => {
               <div 
                 key={product.id} 
                 className="product-card-modern"
-                onClick={() => handleView(product)}
+                onClick={() => navigate(`/products/${product.id}`)}
               >
                 <div className="card-image">
                   <span className="product-emoji">📦</span>
@@ -373,14 +295,14 @@ const Products = () => {
                 <div className="card-actions" onClick={(e) => e.stopPropagation()}>
                   <button 
                     className="btn-view" 
-                    onClick={() => handleView(product)}
+                    onClick={() => navigate(`/products/${product.id}`)}
                     title="View Details"
                   >
                     👁️
                   </button>
                   <button 
                     className="btn-edit" 
-                    onClick={() => handleEdit(product)}
+                    onClick={() => navigate(`/products/edit/${product.id}`)}
                     title="Edit"
                   >
                     ✏️

@@ -1,5 +1,5 @@
 // src/components/products/ProductForm.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './ProductForm.css';
 
@@ -26,6 +26,27 @@ const ProductForm = ({
   });
 
   const [errors, setErrors] = useState({});
+
+  // ✅ FORCE CATEGORIES - Directly use this if categories empty
+  const defaultCategories = [
+    { id: 'cat-1', name: 'Electronics', icon: '💻' },
+    { id: 'cat-2', name: 'Clothing', icon: '👕' },
+    { id: 'cat-3', name: 'Food & Beverages', icon: '🍔' },
+    { id: 'cat-4', name: 'Furniture', icon: '🏠' },
+    { id: 'cat-5', name: 'Stationery', icon: '📚' },
+    { id: 'cat-6', name: 'Books', icon: '📖' },
+    { id: 'cat-7', name: 'Sports & Outdoors', icon: '⚽' },
+    { id: 'cat-8', name: 'Automotive', icon: '🚗' }
+  ];
+
+  // ✅ Use categories if available, else use default
+  const displayCategories = categories && categories.length > 0 ? categories : defaultCategories;
+
+  useEffect(() => {
+    console.log('📂 Categories received:', categories);
+    console.log('📊 Categories count:', categories?.length);
+    console.log('📝 Display categories:', displayCategories);
+  }, [categories]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,6 +83,29 @@ const ProductForm = ({
       
       onSubmit(productData);
     }
+  };
+
+  // ✅ Get category name safely
+  const getCategoryName = (cat) => {
+    if (!cat) return 'Unnamed';
+    if (typeof cat === 'string') return cat;
+    return cat.name || cat.categoryName || cat.title || cat.label || 'Unnamed';
+  };
+
+  const getCategoryValue = (cat) => {
+    if (!cat) return '';
+    if (typeof cat === 'string') return cat;
+    return cat.name || cat.categoryName || cat.title || cat.label || '';
+  };
+
+  const getCategoryIcon = (cat) => {
+    if (!cat || typeof cat === 'string') return null;
+    return cat.icon || cat.emoji || null;
+  };
+
+  const getCategoryId = (cat) => {
+    if (!cat || typeof cat === 'string') return null;
+    return cat.id || cat._id || null;
   };
 
   return (
@@ -102,26 +146,23 @@ const ProductForm = ({
             className={errors.category ? 'error' : ''}
             disabled={loading}
           >
-            <option value=""> Select Category </option>
-            {categories && categories.length > 0 ? (
-              categories.map((cat, index) => (
-                <option 
-                  key={cat.id || `cat-${index}`} 
-                  value={cat.name || cat}
-                >
-                  {cat.icon && <span className="category-icon">{cat.icon}</span>}
-                  {cat.name || cat}
-                  {cat.count !== undefined && ` (${cat.count})`}
+            <option value="">-- Select Category --</option>
+            {displayCategories.map((cat, index) => {
+              const name = getCategoryName(cat);
+              const value = getCategoryValue(cat) || name;
+              const icon = getCategoryIcon(cat);
+              const id = getCategoryId(cat) || `cat-${index}`;
+              
+              return (
+                <option key={id} value={value}>
+                  {icon ? `${icon} ` : '📂 '}
+                  {name}
                 </option>
-              ))
-            ) : (
-              <option value="" disabled>No categories available</option>
-            )}
+              );
+            })}
           </select>
           {errors.category && <span className="error-text">{errors.category}</span>}
-          {categories.length === 0 && (
-            <span className="warning-text">⚠️ Please add categories first</span>
-          )}
+          <span className="success-text">✅ {displayCategories.length} categories available</span>
         </div>
 
         <div className="form-group">
