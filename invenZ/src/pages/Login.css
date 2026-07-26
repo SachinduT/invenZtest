@@ -1,19 +1,19 @@
-/* src/pages/Login.css - Enhanced with attractive error styles */
+/* src/pages/Login.css - Complete with Demo Users */
 .login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
   padding: 20px;
 }
 
 .login-page .card {
   background: white;
   border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 60px rgba(27, 94, 32, 0.15);
   padding: 40px;
-  max-width: 450px;
+  max-width: 480px;
   width: 100%;
   animation: slideUp 0.5s ease;
 }
@@ -53,6 +53,7 @@
 .login-page .brand p {
   color: #666;
   margin: 5px 0 0;
+  font-size: 14px;
 }
 
 /* Form Groups */
@@ -91,12 +92,12 @@
 }
 
 .login-page .form-group input.error {
-  border-color: #f44336;
+  border-color: #F44336;
   background: #fff5f5;
 }
 
 .login-page .form-group input.error:focus {
-  border-color: #f44336;
+  border-color: #F44336;
   box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
 }
 
@@ -129,9 +130,9 @@
 }
 
 .login-page .field-error {
-  color: #d32f2f;
+  color: #c62828;
   background: #ffebee;
-  border-left: 3px solid #f44336;
+  border-left: 3px solid #F44336;
 }
 
 .login-page .field-error .error-icon {
@@ -140,7 +141,7 @@
 }
 
 .login-page .field-success {
-  color: #2e7d32;
+  color: #2E7D32;
   background: #e8f5e9;
   border-left: 3px solid #4CAF50;
 }
@@ -150,7 +151,6 @@
   font-size: 16px;
 }
 
-/* Form Options */
 .login-page .form-options {
   display: flex;
   justify-content: flex-end;
@@ -190,7 +190,7 @@
 
 .login-page .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(27, 94, 32, 0.2);
+  box-shadow: 0 10px 20px rgba(27, 94, 32, 0.25);
 }
 
 .login-page .btn-primary:disabled {
@@ -199,7 +199,6 @@
   transform: none;
 }
 
-/* Small Spinner */
 .login-page .spinner-small {
   display: inline-block;
   width: 16px;
@@ -215,62 +214,212 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Demo Helper Section */
-.login-page .demo-helper {
-  margin-top: 25px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 1px dashed #c8e6c9;
+/* ============================================
+   ✅ DEMO USERS SECTION - Green Theme
+   ============================================ */
+.demo-section {
+  margin-top: 24px;
 }
 
-.login-page .demo-title {
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 12px 0;
+/* Demo Toggle Button */
+.demo-toggle {
+  width: 100%;
+  padding: 12px 16px;
+  background: #f5f5f5;
+  color: #1B5E20;
+  border: 2px dashed #4CAF50;
+  border-radius: 10px;
   font-size: 14px;
-}
-
-.login-page .demo-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
-  margin-bottom: 10px;
 }
 
-.login-page .demo-item {
+.demo-toggle:hover {
+  background: #e8f5e9;
+  border-color: #2E7D32;
+  transform: translateY(-1px);
+}
+
+.demo-toggle.active {
+  background: #1B5E20;
+  color: white;
+  border-style: solid;
+  border-color: #1B5E20;
+}
+
+.demo-toggle.active:hover {
+  background: #2E7D32;
+}
+
+.demo-toggle-icon {
+  font-size: 18px;
+}
+
+.demo-toggle-arrow {
+  font-size: 12px;
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.demo-toggle.active .demo-toggle-arrow {
+  transform: rotate(180deg);
+}
+
+/* Demo Users Container */
+.demo-users-container {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8faf8;
+  border-radius: 12px;
+  border: 1px solid #c8e6c9;
+  animation: slideDown 0.3s ease;
+}
+
+.demo-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.demo-header-icon {
+  font-size: 18px;
+}
+
+.demo-header-text {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1B5E20;
+}
+
+.demo-subtitle {
+  font-size: 12px;
+  color: #888;
+  margin: 0 0 14px 0;
+}
+
+/* Demo User Card */
+.demo-user-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+}
+
+.demo-user-card:last-child {
+  margin-bottom: 0;
+}
+
+.demo-user-card:hover {
+  border-color: #4CAF50;
+  transform: translateX(6px);
+  box-shadow: 0 4px 15px rgba(27, 94, 32, 0.12);
+}
+
+.demo-user-card:active {
+  transform: scale(0.98);
+}
+
+/* User Avatar */
+.demo-user-avatar {
+  flex-shrink: 0;
+}
+
+.demo-user-avatar img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #4CAF50;
+}
+
+/* User Info */
+.demo-user-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 8px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  gap: 2px;
 }
 
-.login-page .demo-role {
+.demo-user-name {
   font-weight: 600;
-  color: #1B5E20;
-  font-size: 12px;
-}
-
-.login-page .demo-email {
-  font-size: 11px;
-  color: #666;
-  margin: 2px 0;
-}
-
-.login-page .demo-pass {
   font-size: 14px;
-  color: #999;
-  letter-spacing: 2px;
+  color: #1A1A1A;
 }
 
-.login-page .demo-note {
-  display: block;
-  text-align: center;
+.demo-user-email {
+  font-size: 12px;
   color: #888;
-  font-size: 11px;
+}
+
+.demo-user-role {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.demo-user-role.admin {
+  background: #e8f5e9;
+  color: #1B5E20;
+}
+
+.demo-user-role.manager {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.demo-user-role.staff {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+.demo-user-role.administrator {
+  background: #e8f5e9;
+  color: #1B5E20;
+}
+
+/* User Action */
+.demo-user-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.demo-user-password {
+  font-size: 12px;
+  color: #666;
+  background: #f5f5f5;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: monospace;
+}
+
+.demo-user-click {
+  font-size: 12px;
+  color: #4CAF50;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.demo-user-card:hover .demo-user-click {
+  opacity: 1;
 }
 
 /* Footer Links */
@@ -278,7 +427,7 @@
   text-align: center;
   margin-top: 25px;
   padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #e8f5e9;
 }
 
 .login-page .footer-links p {
@@ -298,7 +447,9 @@
   text-decoration: underline;
 }
 
-/* Responsive */
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 @media (max-width: 480px) {
   .login-page .card {
     padding: 25px;
@@ -308,12 +459,135 @@
     font-size: 28px;
   }
 
-  .login-page .demo-grid {
-    grid-template-columns: 1fr;
-  }
-
   .login-page .btn-primary {
     font-size: 14px;
     padding: 12px;
+  }
+
+  .demo-user-card {
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+
+  .demo-user-action {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
+  .demo-user-click {
+    opacity: 1;
+    font-size: 11px;
+  }
+
+  .demo-toggle {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  .login-page {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0d1b0d 100%);
+  }
+
+  .login-page .card {
+    background: #1e1e2e;
+  }
+
+  .login-page .brand h1 {
+    color: #4CAF50;
+  }
+
+  .login-page .brand p {
+    color: #aaa;
+  }
+
+  .login-page .form-group label {
+    color: #e0e0e0;
+  }
+
+  .login-page .form-group input {
+    background: #2d2d3d;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  .login-page .form-group input:focus {
+    background: #2d2d3d;
+  }
+
+  .demo-toggle {
+    background: #2d2d3d;
+    color: #4CAF50;
+  }
+
+  .demo-toggle:hover {
+    background: #1B5E20;
+    color: white;
+  }
+
+  .demo-toggle.active {
+    background: #1B5E20;
+    color: white;
+  }
+
+  .demo-users-container {
+    background: #1a1a2e;
+    border-color: #2E7D32;
+  }
+
+  .demo-header-text {
+    color: #4CAF50;
+  }
+
+  .demo-user-card {
+    background: #1e1e2e;
+  }
+
+  .demo-user-card:hover {
+    border-color: #4CAF50;
+  }
+
+  .demo-user-name {
+    color: #e0e0e0;
+  }
+
+  .demo-user-email {
+    color: #888;
+  }
+
+  .demo-user-password {
+    background: #2d2d3d;
+    color: #aaa;
+  }
+
+  .demo-user-click {
+    color: #4CAF50;
+  }
+
+  .login-page .footer-links p {
+    color: #888;
+  }
+
+  .login-page .footer-links a {
+    color: #4CAF50;
+  }
+
+  .login-page .footer-links a:hover {
+    color: #66bb6a;
+  }
+
+  .login-page .field-error {
+    background: #1a1a2e;
+    color: #ef5350;
+  }
+
+  .login-page .field-success {
+    background: #0d1b0d;
+    color: #66bb6a;
   }
 }
