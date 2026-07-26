@@ -1,4 +1,5 @@
 /* src/pages/Stock.css */
+
 :root {
   --primary: #1B5E20;
   --secondary: #2E7D32;
@@ -18,7 +19,7 @@
   min-height: 100vh;
 }
 
-/* Back to Dashboard */
+/* ===== BACK TO DASHBOARD ===== */
 .stock-nav {
   margin-bottom: 12px;
 }
@@ -55,7 +56,7 @@
   transform: translateX(-4px);
 }
 
-/* Toolbar */
+/* ===== TOOLBAR ===== */
 .stock-actions {
   display: flex;
   justify-content: flex-end;
@@ -79,7 +80,9 @@
   color: var(--white);
 }
 
-/* Stats Grid */
+/* ============================================
+   STATS GRID - 5 CARDS හරිහැටි
+   ============================================ */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -90,13 +93,14 @@
 .stat-card {
   background: var(--white);
   border-radius: 12px;
-  padding: 16px 20px;
+  padding: 20px 16px;
   display: flex;
   align-items: center;
   gap: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   border: 1px solid #f0f0f0;
   transition: all 0.3s ease;
+  min-height: 80px;
 }
 
 .stat-card:hover {
@@ -118,6 +122,8 @@
 .stat-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .stat-number {
@@ -125,6 +131,12 @@
   font-weight: 700;
   color: var(--primary);
   line-height: 1.2;
+}
+
+.stat-number .currency {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
 }
 
 .stat-label {
@@ -135,7 +147,9 @@
   letter-spacing: 0.5px;
 }
 
-/* Filters */
+/* ============================================
+   FILTERS
+   ============================================ */
 .filters-section {
   display: flex;
   flex-wrap: wrap;
@@ -244,13 +258,16 @@
   color: var(--white);
 }
 
+/* ===== RESULTS COUNT ===== */
 .results-count {
   font-size: 14px;
   color: #666;
   margin-bottom: 16px;
 }
 
-/* Stock Container */
+/* ============================================
+   STOCK CONTAINER
+   ============================================ */
 .stock-container {
   display: grid;
   gap: 20px;
@@ -264,7 +281,9 @@
   grid-template-columns: 1fr;
 }
 
-/* Stock Card */
+/* ============================================
+   STOCK CARD - GRID VIEW
+   ============================================ */
 .stock-card {
   background: var(--white);
   border-radius: 12px;
@@ -407,7 +426,6 @@
   background: #2196F3;
 }
 
-/* Stock Controls */
 .stock-controls {
   display: flex;
   align-items: center;
@@ -473,7 +491,9 @@
   cursor: not-allowed;
 }
 
-/* Stock List */
+/* ============================================
+   STOCK LIST VIEW
+   ============================================ */
 .stock-list-item {
   display: flex;
   justify-content: space-between;
@@ -632,6 +652,9 @@
   color: var(--white);
 }
 
+/* ============================================
+   EMPTY STATE
+   ============================================ */
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -655,6 +678,9 @@
   color: #999;
 }
 
+/* ============================================
+   LOADER
+   ============================================ */
 .loader-container {
   display: flex;
   flex-direction: column;
@@ -682,9 +708,19 @@
   100% { transform: rotate(360deg); }
 }
 
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 @media (max-width: 1200px) {
   .stats-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .btn-back-dashboard {
+    font-size: 13px;
+    padding: 6px 14px;
   }
 }
 
@@ -695,6 +731,22 @@
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 16px;
+    min-height: 70px;
+  }
+
+  .stat-number {
+    font-size: 20px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
   }
 
   .filters-section {
@@ -730,6 +782,11 @@
   .stock-details {
     grid-template-columns: 1fr;
   }
+
+  .btn-back-dashboard {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -739,17 +796,23 @@
   }
 
   .stat-card {
-    padding: 12px 16px;
+    padding: 12px;
+    min-height: 60px;
+    gap: 10px;
   }
 
   .stat-number {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .stat-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .stat-label {
+    font-size: 10px;
   }
 
   .stock-controls {
@@ -758,5 +821,10 @@
 
   .btn-adjust-large {
     margin-left: 0;
+  }
+
+  .btn-back-dashboard {
+    font-size: 11px;
+    padding: 4px 10px;
   }
 }
