@@ -26,7 +26,6 @@ const Sidebar = () => {
           >
             <span className="sidebar-icon">{item.icon}</span>
             <span className="sidebar-label">{item.label}</span>
-            {item.label === 'Stock' && <span className="sidebar-badge">5</span>}
             {item.label === 'Charts' && <span className="sidebar-badge">📈</span>}
           </NavLink>
         ))}
