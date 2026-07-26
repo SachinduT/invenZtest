@@ -1,185 +1,16 @@
-// src/context/AuthContext.jsx - CONNECTED TO BACKEND
+// src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authService } from '../services';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile
+} from 'firebase/auth';
+import { auth, db } from '../firebase/config';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-const AuthContext = createContext(null);
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Check if user is already logged in
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = authService.getToken();
-        if (token) {
-          const currentUser = authService.getCurrentUser();
-          if (currentUser) {
-            setUser(currentUser);
-            setIsAuthenticated(true);
-          } else {
-            // Try to fetch user from API
-            const response = await authService.getProfile();
-            if (response.data?.user) {
-              setUser(response.data.user);
-              setIsAuthenticated(true);
-              localStorage.setItem('user', JSON.stringify(response.data.user));
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err);
-        authService.logout();
-        setUser(null);
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  // Login
-  const login = async (email, password) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await authService.login(email, password);
-      setUser(response.data.user);
-      setIsAuthenticated(true);
-      return response;
-    } catch (err) {
-      setError(err.message || 'Login failed');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Register
-  const register = async (userData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await authService.register(userData);
-      setUser(response.data.user);
-      setIsAuthenticated(true);
-      return response;
-    } catch (err) {
-      setError(err.message || 'Registration failed');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Logout
-  const logout = () => {
-    authService.logout();
-    setUser(null);
-    setIsAuthenticated(false);
-    setError(null);
-  };
-
-  // Update profile
-  const updateProfile = async (userData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await authService.updateProfile(userData);
-      setUser(response.data.user);
-      return response;
-    } catch (err) {
-      setError(err.message || 'Failed to update profile');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Change password
-  const changePassword = async (currentPassword, newPassword) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await authService.changePassword(currentPassword, newPassword);
-      return response;
-    } catch (err) {
-      setError(err.message || 'Failed to change password');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Forgot password
-  const forgotPassword = async (email) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await authService.forgotPassword(email);
-      return response;
-    } catch (err) {
-      setError(err.message || 'Failed to send reset email');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Reset password
-  const resetPassword = async (token, password) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await authService.resetPassword(token, password);
-      return response;
-    } catch (err) {
-      setError(err.message || 'Failed to reset password');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Get current user
-  const getCurrentUser = () => user;
-
-  // Check if user has role
-  const hasRole = (role) => {
-    if (!user) return false;
-    if (Array.isArray(role)) {
-      return role.includes(user.role);
-    }
-    return user.role === role;
-  };
-
-  const value = {
-    user,
-    loading,
-    error,
-    isAuthenticated,
-    login,
-    register,
-    logout,
-    updateProfile,
-    changePassword,
-    forgotPassword,
-    resetPassword,
-    getCurrentUser,
-    hasRole
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -189,4 +20,116 @@ export const useAuth = () => {
   return context;
 };
 
-export default AuthContext;
+export const AuthProvider = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
+
+  // Sign up with email and password
+  const signup = async (email, password, userData) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Update profile with display name
+      await updateProfile(user, {
+        displayName: userData.name || userData.fullName
+      });
+
+      // Store additional user data in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: user.email,
+        name: userData.name || userData.fullName,
+        role: userData.role || 'User',
+        createdAt: new Date().toISOString(),
+        ...userData
+      });
+
+      return { user, message: 'Account created successfully!' };
+    } catch (error) {
+      throw new Error(getErrorMessage(error.code));
+    }
+  };
+
+  // Login with email and password
+  const login = async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Fetch user profile from Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        setUserProfile(userDoc.data());
+      }
+      
+      return { user, message: 'Login successful!' };
+    } catch (error) {
+      throw new Error(getErrorMessage(error.code));
+    }
+  };
+
+  // Logout
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUserProfile(null);
+      return { message: 'Logged out successfully' };
+    } catch (error) {
+      throw new Error('Failed to logout');
+    }
+  };
+
+  // Get error message helper
+  const getErrorMessage = (errorCode) => {
+    const errorMessages = {
+      'auth/email-already-in-use': 'Email already in use. Please try another email.',
+      'auth/invalid-email': 'Invalid email address format.',
+      'auth/weak-password': 'Password should be at least 6 characters.',
+      'auth/user-not-found': 'No account found with this email.',
+      'auth/wrong-password': 'Incorrect password.',
+      'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
+      'auth/network-request-failed': 'Network error. Please check your connection.'
+    };
+    return errorMessages[errorCode] || 'Authentication failed. Please try again.';
+  };
+
+  // Set up auth state listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setUserProfile(userDoc.data());
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      } else {
+        setUserProfile(null);
+      }
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const value = {
+    currentUser,
+    userProfile,
+    loading,
+    login,
+    signup,
+    logout,
+    isAuthenticated: !!currentUser
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+};
