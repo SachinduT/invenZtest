@@ -1,19 +1,22 @@
+/* src/pages/AddProduct.css */
 .add-product-page {
-  max-width: 800px;
+  padding: 20px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.add-product-page .page-header {
-  margin-bottom: 24px;
+.page-header {
+  margin-bottom: 30px;
 }
 
-.add-product-page .page-header h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 4px;
+.page-header h1 {
+  font-size: 28px;
+  color: var(--text-primary, #1a1a1a);
+  margin: 0 0 8px 0;
 }
 
-.add-product-page .page-header p {
-  color: #666;
+.page-header p {
+  color: var(--text-secondary, #666);
+  margin: 0;
+  font-size: 16px;
 }

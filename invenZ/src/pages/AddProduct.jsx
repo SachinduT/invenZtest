@@ -8,39 +8,36 @@ import './AddProduct.css';
 
 const AddProduct = () => {
   const navigate = useNavigate();
-  const { createProduct, loadProducts } = useProduct();  // ✅ loadProducts එක Add කරන්න
+  const { createProduct, loadProducts } = useProduct();
   const { success, error } = useNotification();
   const [loading, setLoading] = useState(false);
 
-  // ✅ Categories - ProductForm එකට යවන්න
   const categories = [
-    { id: 'Food', name: 'Food' },
-    { id: 'Electronics', name: 'Electronics' },
-    { id: 'Clothing', name: 'Clothing' },
-    { id: 'Books', name: 'Books' },
-    { id: 'Home & Garden', name: 'Home & Garden' }
+    { id: '1', name: 'Food' },
+    { id: '2', name: 'Electronics' },
+    { id: '3', name: 'Clothing' },
+    { id: '4', name: 'Books' },
+    { id: '5', name: 'Home & Garden' }
   ];
 
-  // ✅ Suppliers - ProductForm එකට යවන්න
   const suppliers = [
-    { id: 'sup1', name: 'Tech Distributors Ltd' },
-    { id: 'sup2', name: 'Food Supply Co.' },
-    { id: 'sup3', name: 'Fashion Hub' }
+    { id: '1', name: 'Tech Distributors Ltd' },
+    { id: '2', name: 'Food Supply Co.' },
+    { id: '3', name: 'Fashion Hub' }
   ];
 
   const handleSubmit = async (data) => {
     try {
       setLoading(true);
+      console.log('📝 Submitting product:', data);
       
-      // ✅ Product එක Create කරනවා
       await createProduct(data);
-      
-      // ✅ Products Reload කරන්න (නව Product එක පෙන්වන්න)
       await loadProducts();
       
       success('Product added successfully!');
       navigate('/products');
     } catch (err) {
+      console.error('❌ Error:', err);
       error(err.message || 'Failed to add product');
     } finally {
       setLoading(false);
