@@ -120,3 +120,44 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Add to your CSS */
+.warning-text {
+  color: #f44336;
+  font-size: 14px;
+  margin-top: 8px;
+  display: block;
+}
+
+.form-group .warning-text {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #f44336;
+}
+
+/* Select dropdown styling */
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.form-group select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-group select.error {
+  border-color: #f44336;
+}

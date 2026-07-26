@@ -1,5 +1,6 @@
 // src/components/products/ProductForm.jsx
 import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import './ProductForm.css';
 
 const ProductForm = ({ 
@@ -9,6 +10,7 @@ const ProductForm = ({
   categories = [],
   loading = false
 }) => {
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     sku: initialData?.sku || '',
@@ -47,14 +49,18 @@ const ProductForm = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit({
+      const productData = {
         ...formData,
         purchasePrice: parseFloat(formData.purchasePrice) || 0,
         sellingPrice: parseFloat(formData.sellingPrice) || 0,
         currentStock: parseInt(formData.currentStock) || 0,
         minStock: parseInt(formData.minStock) || 0,
-        maxStock: parseInt(formData.maxStock) || 0
-      });
+        maxStock: parseInt(formData.maxStock) || 0,
+        createdBy: currentUser?.uid || 'unknown',
+        createdByEmail: currentUser?.email || 'unknown'
+      };
+      
+      onSubmit(productData);
     }
   };
 
@@ -81,7 +87,7 @@ const ProductForm = ({
             value={formData.sku}
             onChange={handleChange}
             className={errors.sku ? 'error' : ''}
-            placeholder="Enter SKU"
+            placeholder="Enter SKU (e.g., PRD-001)"
             disabled={loading}
           />
           {errors.sku && <span className="error-text">{errors.sku}</span>}
@@ -96,14 +102,26 @@ const ProductForm = ({
             className={errors.category ? 'error' : ''}
             disabled={loading}
           >
-            <option value="">Select Category</option>
-            {categories.map(cat => (
-              <option key={cat.id || cat} value={cat.name || cat}>
-                {cat.name || cat}
-              </option>
-            ))}
+            <option value=""> Select Category </option>
+            {categories && categories.length > 0 ? (
+              categories.map((cat, index) => (
+                <option 
+                  key={cat.id || `cat-${index}`} 
+                  value={cat.name || cat}
+                >
+                  {cat.icon && <span className="category-icon">{cat.icon}</span>}
+                  {cat.name || cat}
+                  {cat.count !== undefined && ` (${cat.count})`}
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>No categories available</option>
+            )}
           </select>
           {errors.category && <span className="error-text">{errors.category}</span>}
+          {categories.length === 0 && (
+            <span className="warning-text">⚠️ Please add categories first</span>
+          )}
         </div>
 
         <div className="form-group">
@@ -142,6 +160,7 @@ const ProductForm = ({
             step="0.01"
             className={errors.purchasePrice ? 'error' : ''}
             disabled={loading}
+            placeholder="0.00"
           />
           {errors.purchasePrice && <span className="error-text">{errors.purchasePrice}</span>}
         </div>
@@ -157,6 +176,7 @@ const ProductForm = ({
             step="0.01"
             className={errors.sellingPrice ? 'error' : ''}
             disabled={loading}
+            placeholder="0.00"
           />
           {errors.sellingPrice && <span className="error-text">{errors.sellingPrice}</span>}
         </div>
@@ -227,7 +247,14 @@ const ProductForm = ({
           Cancel
         </button>
         <button type="submit" className="btn-submit" disabled={loading}>
-          {loading ? 'Saving...' : (initialData ? 'Update Product' : 'Add Product')}
+          {loading ? (
+            <>
+              <span className="spinner-small"></span>
+              {initialData ? 'Updating...' : 'Adding...'}
+            </>
+          ) : (
+            initialData ? 'Update Product' : 'Add Product'
+          )}
         </button>
       </div>
     </form>
