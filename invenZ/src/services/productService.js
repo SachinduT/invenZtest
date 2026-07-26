@@ -18,11 +18,17 @@ import { auth } from '../firebase/config';
 // Collection reference
 const productsCollection = collection(db, 'products');
 
-// Add new product to Firebase
+// ✅ addProduct
 export const addProduct = async (productData) => {
   try {
+    console.log('📤 productService.addProduct called with:', productData);
+    
     const user = auth.currentUser;
-    if (!user) throw new Error('User must be logged in to add products');
+    console.log('👤 Current user in service:', user?.email || 'Not logged in');
+    
+    if (!user) {
+      throw new Error('You must be logged in to add products');
+    }
 
     const product = {
       name: productData.name,
@@ -45,6 +51,8 @@ export const addProduct = async (productData) => {
       updatedAt: serverTimestamp()
     };
 
+    console.log('📦 Product data to save:', product);
+
     const docRef = await addDoc(productsCollection, product);
     console.log('✅ Product added with ID:', docRef.id);
     
@@ -56,13 +64,14 @@ export const addProduct = async (productData) => {
     };
   } catch (error) {
     console.error('❌ Error adding product:', error);
-    throw new Error(getErrorMessage(error.code));
+    throw new Error(error.message || 'Failed to add product');
   }
 };
 
-// Get all products from Firebase
+// Get all products
 export const getProducts = async (filters = {}) => {
   try {
+    console.log('📤 Fetching products...');
     let q = query(productsCollection, orderBy('createdAt', 'desc'));
     
     if (filters.category) {
@@ -81,7 +90,6 @@ export const getProducts = async (filters = {}) => {
       updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
     }));
     
-    // Apply search filter in JavaScript
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       return products.filter(p => 
@@ -99,7 +107,7 @@ export const getProducts = async (filters = {}) => {
   }
 };
 
-// Get single product by ID
+// Get single product
 export const getProductById = async (productId) => {
   try {
     const docRef = doc(db, 'products', productId);
@@ -183,7 +191,7 @@ export const updateStock = async (productId, newStock) => {
   }
 };
 
-// Helper function for error messages
+// Helper function
 const getErrorMessage = (errorCode) => {
   const errorMessages = {
     'permission-denied': "You don't have permission to perform this action.",
