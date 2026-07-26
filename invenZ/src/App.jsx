@@ -19,8 +19,7 @@ import Products from './pages/Products';
 import AddProduct from './pages/AddProduct';
 import EditProduct from './pages/EditProduct';
 import ProductDetails from './pages/ProductDetails';
-import Categories from './pages/Categories';
-import Categories from './pages/Categories';    // ✅ Categories Import
+import Categories from './pages/Categories';  // ✅ Categories Import
 import Charts from './pages/Charts';
 import Profile from './pages/Profile';
 import Suppliers from './pages/Suppliers';

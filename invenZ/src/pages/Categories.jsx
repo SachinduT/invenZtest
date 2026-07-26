@@ -1,7 +1,6 @@
-// src/pages/Categories.jsx - COMPLETE FUNCTIONAL VERSION
+// src/pages/Categories.jsx - COMPLETE WITH REDESIGNED STATS CARDS
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProduct } from '../context/ProductContext';
 import { useNotification } from '../context/NotificationContext';
 import { 
   getCategories, 
@@ -13,11 +12,14 @@ import './Categories.css';
 
 const Categories = () => {
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { success, error: showError } = useNotification();
+  
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -31,80 +33,63 @@ const Categories = () => {
 
   // Load categories from Firebase
   useEffect(() => {
-    loadData();
+    loadCategories();
   }, []);
 
   const loadCategories = async () => {
-    setLoading(true);
-    // Mock data - replace with API call
-    const mockCategories = [
-      { id: 1, name: 'Electronics', description: 'Electronic items and gadgets', icon: '💻', color: '#1B5E20', count: 15 },
-      { id: 2, name: 'Food & Beverage', description: 'Food products and drinks', icon: '🍔', color: '#FF9800', count: 23 },
-      { id: 3, name: 'Clothing', description: 'Apparel and fashion', icon: '👕', color: '#4CAF50', count: 8 },
-      { id: 4, name: 'Books', description: 'Books and publications', icon: '📚', color: '#2196F3', count: 12 },
-      { id: 5, name: 'Home & Garden', description: 'Home and garden items', icon: '🏠', color: '#9C27B0', count: 6 },
-    ];
-    setCategories(mockCategories);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const categoriesData = await getCategories();
+      
+      // If no categories from Firebase, use mock data
+      if (!categoriesData || categoriesData.length === 0) {
+        const mockCategories = [
+          { id: 1, name: 'Electronics', description: 'Electronic items and gadgets', icon: '💻', color: '#1B5E20', count: 15, createdAt: '2026-07-20' },
+          { id: 2, name: 'Food & Beverage', description: 'Food products and drinks', icon: '🍔', color: '#FF9800', count: 23, createdAt: '2026-07-21' },
+          { id: 3, name: 'Clothing', description: 'Apparel and fashion', icon: '👕', color: '#4CAF50', count: 8, createdAt: '2026-07-22' },
+          { id: 4, name: 'Books', description: 'Books and publications', icon: '📚', color: '#2196F3', count: 12, createdAt: '2026-07-23' },
+          { id: 5, name: 'Home & Garden', description: 'Home and garden items', icon: '🏠', color: '#9C27B0', count: 6, createdAt: '2026-07-24' }
+        ];
+        setCategories(mockCategories);
+      } else {
+        setCategories(categoriesData);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      // Use mock data on error
+      const mockCategories = [
+        { id: 1, name: 'Electronics', description: 'Electronic items and gadgets', icon: '💻', color: '#1B5E20', count: 15, createdAt: '2026-07-20' },
+        { id: 2, name: 'Food & Beverage', description: 'Food products and drinks', icon: '🍔', color: '#FF9800', count: 23, createdAt: '2026-07-21' },
+        { id: 3, name: 'Clothing', description: 'Apparel and fashion', icon: '👕', color: '#4CAF50', count: 8, createdAt: '2026-07-22' },
+        { id: 4, name: 'Books', description: 'Books and publications', icon: '📚', color: '#2196F3', count: 12, createdAt: '2026-07-23' },
+        { id: 5, name: 'Home & Garden', description: 'Home and garden items', icon: '🏠', color: '#9C27B0', count: 6, createdAt: '2026-07-24' }
+      ];
+      setCategories(mockCategories);
+      showError('Using sample categories');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Helper: Get icon based on category name
-  const getCategoryIcon = (name) => {
-    const iconMap = {
-      'Food': '🍔',
-      'Electronics': '💻',
-      'Clothing': '👕',
-      'Books': '📚',
-      'Home': '🏠',
-      'Garden': '🌱',
-      'Toys': '🧸',
-      'Sports': '⚽',
-      'Music': '🎵',
-      'Automotive': '🚗'
-    };
-    return iconMap[name] || '📦';
-  };
-
-  // Helper: Get color based on category name
-  const getCategoryColor = (name) => {
-    const colorMap = {
-      'Food': '#FF9800',
-      'Electronics': '#1B5E20',
-      'Clothing': '#4CAF50',
-      'Books': '#2196F3',
-      'Home': '#9C27B0',
-      'Garden': '#4CAF50',
-      'Toys': '#E91E63',
-      'Sports': '#F44336',
-      'Music': '#9C27B0',
-      'Automotive': '#607D8B'
-    };
-    return colorMap[name] || '#1B5E20';
-  };
-
-  // Default categories from products
-  const getDefaultCategories = (productList) => {
-    const counts = {};
-    productList.forEach(p => {
-      const cat = p.category || 'Uncategorized';
-      counts[cat] = (counts[cat] || 0) + 1;
-    });
-    return Object.keys(counts).map((name, index) => ({
-      id: index + 1,
-      name: name,
-      description: `${name} products`,
-      icon: getCategoryIcon(name),
-      color: getCategoryColor(name),
-      count: counts[name],
-      createdAt: new Date().toISOString().split('T')[0]
-    }));
+  // Helper: Get count color
+  const getCountColor = (count) => {
+    if (count === 0) return '#ffebee';
+    if (count < 5) return '#fff3e0';
+    if (count < 10) return '#e8f5e9';
+    return '#1B5E20';
   };
 
   // Filter categories
   const filteredCategories = categories.filter(cat =>
-    cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    cat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cat.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Stats
+  const totalCategories = categories.length;
+  const totalProducts = categories.reduce((sum, cat) => sum + (cat.count || 0), 0);
+  const activeCategories = categories.filter(cat => (cat.count || 0) > 0).length;
+  const emptyCategories = categories.filter(cat => (cat.count || 0) === 0).length;
 
   // Add Category
   const handleAdd = () => {
@@ -131,42 +116,50 @@ const Categories = () => {
     
     try {
       await deleteCategory(category.id);
-      await loadCategories(); // Reload categories
+      await loadCategories();
       success(`✅ "${category.name}" deleted successfully!`);
     } catch (err) {
       showError(err.message || 'Failed to delete category');
     }
   };
 
-  const handleSubmit = (e) => {
+  // Submit Form
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
       showError('Category name is required');
       return;
     }
 
-    const newCategory = {
-      id: editingCategory ? editingCategory.id : Date.now(),
-      ...formData,
-      count: editingCategory ? editingCategory.count : 0
-    };
+    try {
+      setSubmitting(true);
+      
+      const categoryData = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        icon: formData.icon,
+        color: formData.color
+      };
 
       if (editingCategory) {
-        // Update existing category
         await updateCategory(editingCategory.id, categoryData);
         success(`✅ "${categoryData.name}" updated successfully!`);
       } else {
-        // Add new category
         await addCategory(categoryData);
         success(`✅ "${categoryData.name}" added successfully!`);
       }
 
-    setShowForm(false);
-    setEditingCategory(null);
+      setShowForm(false);
+      setEditingCategory(null);
+      setFormData({ name: '', description: '', icon: '📦', color: '#1B5E20' });
+      await loadCategories();
+      
+    } catch (err) {
+      showError(err.message || 'Failed to save category');
+    } finally {
+      setSubmitting(false);
+    }
   };
-
-  const icons = ['📦', '💻', '🍔', '👕', '📚', '🏠', '⚡', '🎮', '📱', '🎨', '🏢', '🛒', '📊', '⚙️', '🎯'];
-  const colors = ['#1B5E20', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#F44336', '#E91E63', '#00BCD4', '#795548'];
 
   if (loading) {
     return (
@@ -193,23 +186,46 @@ const Categories = () => {
         </button>
       </div>
 
-      {/* Stats Bar */}
-      <div className="stats-bar">
-        <div className="stat-item">
-          <span className="stat-number">{totalCategories}</span>
-          <span className="stat-label">Total Categories</span>
+      {/* Stats Bar - Modern Cards Design */}
+      <div className="stats-bar-modern">
+        <div className="stat-card">
+          <div className="stat-icon-wrapper" style={{ background: '#e8f5e9' }}>
+            <span className="stat-icon">🏷️</span>
+          </div>
+          <div className="stat-info">
+            <span className="stat-number">{totalCategories}</span>
+            <span className="stat-label">Total Categories</span>
+          </div>
         </div>
-        <div className="stat-item">
-          <span className="stat-number">{totalProducts}</span>
-          <span className="stat-label">Total Products</span>
+        
+        <div className="stat-card">
+          <div className="stat-icon-wrapper" style={{ background: '#e3f2fd' }}>
+            <span className="stat-icon">📦</span>
+          </div>
+          <div className="stat-info">
+            <span className="stat-number">{totalProducts}</span>
+            <span className="stat-label">Total Products</span>
+          </div>
         </div>
-        <div className="stat-item">
-          <span className="stat-number">{activeCategories}</span>
-          <span className="stat-label">Active Categories</span>
+        
+        <div className="stat-card">
+          <div className="stat-icon-wrapper" style={{ background: '#e8f5e9' }}>
+            <span className="stat-icon">✅</span>
+          </div>
+          <div className="stat-info">
+            <span className="stat-number">{activeCategories}</span>
+            <span className="stat-label">Active Categories</span>
+          </div>
         </div>
-        <div className="stat-item">
-          <span className="stat-number">{emptyCategories}</span>
-          <span className="stat-label">Empty Categories</span>
+        
+        <div className="stat-card">
+          <div className="stat-icon-wrapper" style={{ background: '#fff3e0' }}>
+            <span className="stat-icon">📭</span>
+          </div>
+          <div className="stat-info">
+            <span className="stat-number">{emptyCategories}</span>
+            <span className="stat-label">Empty Categories</span>
+          </div>
         </div>
       </div>
 
@@ -250,6 +266,8 @@ const Categories = () => {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter category name"
                   required
+                  disabled={submitting}
+                  maxLength={50}
                 />
                 <small className="char-count">{formData.name.length}/50</small>
               </div>
@@ -342,9 +360,9 @@ const Categories = () => {
         </div>
       ) : (
         <div className="categories-grid">
-          {categories.map((category) => (
-            <div key={category.id} className="category-card" style={{ borderColor: category.color }}>
-              <div className="category-icon" style={{ background: category.color + '15', color: category.color }}>
+          {filteredCategories.map((category) => (
+            <div key={category.id} className="category-card" style={{ borderColor: category.color || '#1B5E20' }}>
+              <div className="category-icon" style={{ background: (category.color || '#1B5E20') + '15', color: category.color || '#1B5E20' }}>
                 {category.icon || '📦'}
               </div>
               <div className="category-info">
@@ -353,7 +371,7 @@ const Categories = () => {
                 <div className="category-meta">
                   <span 
                     className="category-count" 
-                    style={{ background: getCountColor(category.count || 0) }}
+                    style={{ background: getCountColor(category.count || 0), color: category.count === 0 ? '#666' : '#fff' }}
                   >
                     {category.count || 0} products
                   </span>

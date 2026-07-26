@@ -1,5 +1,4 @@
-// src/pages/Login.jsx - WITH ATTRACTIVE ERROR MESSAGES
-// src/pages/Login.jsx - WITH DEMO USERS
+// src/pages/Login.jsx - WITH ATTRACTIVE ERROR MESSAGES & DEMO USERS
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -12,8 +11,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [touched, setTouched] = useState({});
-  const { login } = useAuth();
   const [showDemoUsers, setShowDemoUsers] = useState(false);
+  
   const { login, users } = useAuth();
   const { error: showError, success } = useNotification();
   const navigate = useNavigate();
@@ -68,51 +67,6 @@ const Login = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validate all fields before submission
-    const errors = {};
-    if (!email) {
-      errors.email = 'Email address is required';
-    } else if (!validateEmail(email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-    
-    if (!password) {
-      errors.password = 'Password is required';
-    } else if (!validatePassword(password)) {
-      errors.password = 'Password must be at least 6 characters';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      setTouched({ email: true, password: true });
-      return;
-    }
-
-    e.preventDefault();  // ✅ Page Reload වෙන්න එපා!
-    try {
-      setLoading(true);
-      const response = await login(email, password);
-      success(response.message || 'Login successful! 🎉');
-      navigate('/');
-    } catch (err) {
-      // Handle specific Firebase/auth errors with attractive messages
-      const errorMessage = getErrorMessage(err.message);
-      showError(errorMessage);
-      
-      // Set field-specific errors
-      if (err.message.includes('email') || err.message.includes('user')) {
-        setFieldErrors({ ...fieldErrors, email: errorMessage });
-      } else if (err.message.includes('password')) {
-        setFieldErrors({ ...fieldErrors, password: errorMessage });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Get user-friendly error messages
   const getErrorMessage = (error) => {
     const errorMap = {
@@ -143,9 +97,55 @@ const Login = () => {
     return `❌ ${error || 'Login failed. Please try again.'}`;
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate all fields before submission
+    const errors = {};
+    if (!email) {
+      errors.email = 'Email address is required';
+    } else if (!validateEmail(email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    
+    if (!password) {
+      errors.password = 'Password is required';
+    } else if (!validatePassword(password)) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setTouched({ email: true, password: true });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await login(email, password);
+      success(response.message || 'Login successful! 🎉');
+      navigate('/');
+    } catch (err) {
+      // Handle specific Firebase/auth errors with attractive messages
+      const errorMessage = getErrorMessage(err.message);
+      showError(errorMessage);
+      
+      // Set field-specific errors
+      if (err.message.includes('email') || err.message.includes('user')) {
+        setFieldErrors({ ...fieldErrors, email: errorMessage });
+      } else if (err.message.includes('password')) {
+        setFieldErrors({ ...fieldErrors, password: errorMessage });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Check if field has error
   const hasError = (field) => {
     return fieldErrors[field] && touched[field];
+  };
+
   const fillCredentials = (userEmail, userPassword) => {
     setEmail(userEmail);
     setPassword(userPassword);
@@ -243,7 +243,6 @@ const Login = () => {
           </button>
         </form>
 
-        
         {/* ✅ Demo Users - Quick Login */}
         <div className="demo-users">
           <button 

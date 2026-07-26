@@ -1,7 +1,5 @@
-// src/components/layout/Header.jsx - WITH NOTIFICATIONS & PROFILE CLICK
-import React, { useState, useRef, useEffect } from 'react';
 // src/components/layout/Header.jsx - COMPLETE WITH NOTIFICATIONS & USER DROPDOWN
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Header.css';
@@ -12,35 +10,55 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  
+  // Notifications Data
   const [notifications, setNotifications] = useState([
-    {
-      id: 1,
+    { 
+      id: 1, 
+      icon: '📦', 
+      title: 'New Product Added',
+      message: 'New product added: Premium Rice', 
+      time: '5 min ago', 
+      read: false,
       type: 'info',
-      title: 'Welcome to InvenZ!',
-      message: 'Start managing your inventory efficiently.',
-      time: 'Just now',
-      read: false
+      path: '/products'
     },
-    {
-      id: 2,
-      type: 'warning',
+    { 
+      id: 2, 
+      icon: '⚠️', 
       title: 'Low Stock Alert',
-      message: 'Product "Wireless Mouse" is running low (5 units left).',
-      time: '2 hours ago',
-      read: false
+      message: 'Low stock alert: Sugar (8 left)', 
+      time: '1 hour ago', 
+      read: false,
+      type: 'warning',
+      path: '/stock'
     },
-    {
-      id: 3,
+    { 
+      id: 3, 
+      icon: '📊', 
+      title: 'Report Ready',
+      message: 'Monthly report is ready', 
+      time: '2 hours ago', 
+      read: false,
       type: 'success',
+      path: '/reports'
+    },
+    { 
+      id: 4, 
+      icon: '✅', 
       title: 'Order Delivered',
-      message: 'Order #INV-2024-001 has been successfully delivered.',
-      time: '5 hours ago',
-      read: false
-    }
+      message: 'Order #PO-2026-001 delivered', 
+      time: '1 day ago', 
+      read: true,
+      type: 'success',
+      path: '/orders'
+    },
   ]);
 
   const notificationRef = useRef(null);
   const profileRef = useRef(null);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -56,45 +74,6 @@ const Header = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-
-  // ✅ Notifications Data
-  const notifications = [
-    { 
-      id: 1, 
-      icon: '📦', 
-      message: 'New product added: Premium Rice', 
-      time: '5 min ago', 
-      read: false,
-      path: '/products'
-    },
-    { 
-      id: 2, 
-      icon: '⚠️', 
-      message: 'Low stock alert: Sugar (8 left)', 
-      time: '1 hour ago', 
-      read: false,
-      path: '/stock'
-    },
-    { 
-      id: 3, 
-      icon: '📊', 
-      message: 'Monthly report is ready', 
-      time: '2 hours ago', 
-      read: false,
-      path: '/reports'
-    },
-    { 
-      id: 4, 
-      icon: '✅', 
-      message: 'Order #PO-2026-001 delivered', 
-      time: '1 day ago', 
-      read: true,
-      path: '/orders'
-    },
-  ];
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -122,10 +101,11 @@ const Header = () => {
 
   // Handle notification item click
   const handleNotificationItemClick = (notification) => {
-    // You can add navigation logic based on notification type
     console.log('Notification clicked:', notification);
-    // Close notification dropdown
     setShowNotifications(false);
+    if (notification.path) {
+      navigate(notification.path);
+    }
   };
 
   // Mark single notification as read
@@ -143,7 +123,7 @@ const Header = () => {
     setShowNotifications(false);
   };
 
-  // Handle profile click - Navigate to settings
+  // Handle profile click
   const handleProfileClick = () => {
     setShowProfileMenu(!showProfileMenu);
   };
@@ -153,9 +133,6 @@ const Header = () => {
     navigate(path);
   };
 
-  // Get unread count
-  const unreadCount = notifications.filter(n => !n.read).length;
-
   // Get notification icon based on type
   const getNotificationIcon = (type) => {
     switch(type) {
@@ -164,25 +141,6 @@ const Header = () => {
       case 'error': return '❌';
       default: return 'ℹ️';
     }
-  const handleNotificationClick = (notification) => {
-    // Mark as read
-    const updatedNotifications = notifications.map(n => 
-      n.id === notification.id ? { ...n, read: true } : n
-    );
-    console.log('Notification clicked:', notification.message);
-    
-    // Close dropdown
-    setShowNotifications(false);
-    
-    // Navigate to the path
-    if (notification.path) {
-      navigate(notification.path);
-    }
-  };
-
-  const markAllAsRead = () => {
-    notifications.forEach(n => n.read = true);
-    console.log('All notifications marked as read');
   };
 
   return (
@@ -210,17 +168,11 @@ const Header = () => {
 
         {/* ========== ACTIONS ========== */}
         <div className="header-actions-modern">
-          {/* Notification Button */}
+          {/* ===== NOTIFICATIONS ===== */}
           <div className="notification-wrapper" ref={notificationRef}>
             <button 
               className="notification-btn-modern"
               onClick={handleNotificationClick}
-          
-          {/* ===== NOTIFICATIONS ===== */}
-          <div className="notification-wrapper">
-            <button 
-              className="notification-btn-modern"
-              onClick={() => setShowNotifications(!showNotifications)}
               aria-label="Notifications"
             >
               <span className="notification-icon">🔔</span>
@@ -253,7 +205,7 @@ const Header = () => {
                         onClick={() => handleNotificationItemClick(notification)}
                       >
                         <div className="notification-icon-wrapper">
-                          {getNotificationIcon(notification.type)}
+                          {notification.icon || getNotificationIcon(notification.type)}
                         </div>
                         <div className="notification-content">
                           <div className="notification-item-title">
@@ -294,66 +246,12 @@ const Header = () => {
             )}
           </div>
 
-            {showNotifications && (
-              <div className="notification-dropdown">
-                <div className="dropdown-header">
-                  <h4>Notifications</h4>
-                  {unreadCount > 0 && (
-                    <button className="mark-all-btn" onClick={markAllAsRead}>
-                      Mark all as read
-                    </button>
-                  )}
-                </div>
-                <div className="dropdown-body">
-                  {notifications.length === 0 ? (
-                    <div className="empty-notifications">
-                      <span>🔕</span>
-                      <p>No notifications</p>
-                    </div>
-                  ) : (
-                    notifications.map((notif) => (
-                      <div 
-                        key={notif.id} 
-                        className={`notification-item ${notif.read ? 'read' : 'unread'}`}
-                        onClick={() => handleNotificationClick(notif)}
-                      >
-                        <span className="notif-icon">{notif.icon}</span>
-                        <div className="notif-content">
-                          <p className="notif-message">{notif.message}</p>
-                          <span className="notif-time">{notif.time}</span>
-                        </div>
-                        {!notif.read && <span className="notif-dot"></span>}
-                        <span className="notif-arrow">→</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div className="dropdown-footer">
-                  <button 
-                    className="view-all-btn"
-                    onClick={() => {
-                      setShowNotifications(false);
-                      navigate('/notifications');
-                    }}
-                  >
-                    View All Notifications
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* ===== USER PROFILE / LOGIN ===== */}
           {isAuthenticated ? (
-            // Logged In - Show User Profile
-            <div className="user-profile-modern" ref={profileRef}>
-              <div 
-                className="profile-clickable"
-                onClick={handleProfileClick}
-            <div className="user-profile-wrapper">
+            <div className="user-profile-wrapper" ref={profileRef}>
               <div 
                 className="user-profile-modern"
-                onClick={() => setShowUserMenu(!showUserMenu)}
+                onClick={handleProfileClick}
               >
                 <img
                   src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=1B5E20&color=fff&bold=true&size=40`}
@@ -428,19 +326,6 @@ const Header = () => {
                       <span className="menu-shortcut">⌘Q</span>
                     </button>
                   </div>
-              {/* ✅ User Dropdown - Profile, Settings, Logout */}
-              {showUserMenu && (
-                <div className="user-dropdown">
-                  <button onClick={() => navigate('/settings/profile')}>
-                    <span>👤</span> Profile
-                  </button>
-                  <button onClick={() => navigate('/settings')}>
-                    <span>⚙️</span> Settings
-                  </button>
-                  <hr />
-                  <button onClick={handleLogout} className="logout-btn">
-                    <span>🚪</span> Logout
-                  </button>
                 </div>
               )}
             </div>
