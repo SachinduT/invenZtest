@@ -13,7 +13,7 @@ const Login = () => {
   const [touched, setTouched] = useState({});
   const [showDemoUsers, setShowDemoUsers] = useState(false);
   
-  const { login, users } = useAuth();
+  const { login, users } = useAuth();  // ✅ users comes from AuthContext
   const { error: showError, success } = useNotification();
   const navigate = useNavigate();
 
@@ -78,29 +78,20 @@ const Login = () => {
       'auth/user-disabled': '🚫 This account has been disabled. Please contact support.',
       'auth/email-already-in-use': '📧 This email is already registered. Please login instead.',
       'auth/weak-password': '🔒 Password should be at least 6 characters long.',
-      'auth/invalid-credential': '❌ Invalid credentials. Please check your email and password.',
-      'auth/operation-not-allowed': '⚠️ This login method is not enabled. Please contact support.',
-      'auth/requires-recent-login': '⏰ Please login again to continue.',
-      'auth/provider-already-linked': '🔗 This account is already linked with another provider.',
-      'auth/invalid-verification-code': '❌ Invalid verification code. Please try again.',
-      'auth/invalid-verification-id': '❌ Invalid verification ID. Please try again.'
+      'auth/invalid-credential': '❌ Invalid credentials. Please check your email and password.'
     };
 
-    // Check if error matches any known Firebase error
     for (const [key, value] of Object.entries(errorMap)) {
       if (error.includes(key)) {
         return value;
       }
     }
-
-    // Fallback error message
     return `❌ ${error || 'Login failed. Please try again.'}`;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate all fields before submission
     const errors = {};
     if (!email) {
       errors.email = 'Email address is required';
@@ -126,11 +117,9 @@ const Login = () => {
       success(response.message || 'Login successful! 🎉');
       navigate('/');
     } catch (err) {
-      // Handle specific Firebase/auth errors with attractive messages
       const errorMessage = getErrorMessage(err.message);
       showError(errorMessage);
       
-      // Set field-specific errors
       if (err.message.includes('email') || err.message.includes('user')) {
         setFieldErrors({ ...fieldErrors, email: errorMessage });
       } else if (err.message.includes('password')) {
@@ -141,14 +130,22 @@ const Login = () => {
     }
   };
 
-  // Check if field has error
-  const hasError = (field) => {
-    return fieldErrors[field] && touched[field];
-  };
-
   const fillCredentials = (userEmail, userPassword) => {
     setEmail(userEmail);
     setPassword(userPassword);
+    setShowDemoUsers(false);
+    
+    // Auto submit after filling
+    setTimeout(() => {
+      const form = document.querySelector('form');
+      if (form) {
+        form.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    }, 500);
+  };
+
+  const hasError = (field) => {
+    return fieldErrors[field] && touched[field];
   };
 
   return (
@@ -161,7 +158,6 @@ const Login = () => {
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
-          {/* Email Field */}
           <div className={`form-group ${hasError('email') ? 'has-error' : ''}`}>
             <label>
               <span className="label-icon">📧</span>
@@ -191,7 +187,6 @@ const Login = () => {
             )}
           </div>
 
-          {/* Password Field */}
           <div className={`form-group ${hasError('password') ? 'has-error' : ''}`}>
             <label>
               <span className="label-icon">🔒</span>
@@ -227,11 +222,7 @@ const Login = () => {
             </Link>
           </div>
 
-          <button 
-            type="submit" 
-            className="btn-primary" 
-            disabled={loading}
-          >
+          <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? (
               <>
                 <span className="spinner-small"></span>
@@ -243,36 +234,49 @@ const Login = () => {
           </button>
         </form>
 
-        {/* ✅ Demo Users - Quick Login */}
-        <div className="demo-users">
+        {/* ✅ DEMO USERS SECTION */}
+        <div className="demo-section">
           <button 
             type="button"
-            className="demo-toggle"
+            className={`demo-toggle ${showDemoUsers ? 'active' : ''}`}
             onClick={() => setShowDemoUsers(!showDemoUsers)}
           >
+            <span className="demo-toggle-icon">👥</span>
             {showDemoUsers ? 'Hide Demo Users' : 'Show Demo Users'}
+            <span className="demo-toggle-arrow">{showDemoUsers ? '▲' : '▼'}</span>
           </button>
           
-          {showDemoUsers && (
-            <div className="demo-users-list">
-              {users?.map((user) => (
+          {showDemoUsers && users && users.length > 0 && (
+            <div className="demo-users-container">
+              <div className="demo-header">
+                <span className="demo-header-icon">🔑</span>
+                <span className="demo-header-text">Quick Login with Demo Accounts</span>
+              </div>
+              <p className="demo-subtitle">Click any user to auto-login instantly</p>
+              
+              {users.map((user) => (
                 <div 
                   key={user.id}
-                  className="demo-user-item"
+                  className="demo-user-card"
                   onClick={() => fillCredentials(user.email, user.password)}
                 >
-                  <img 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1B5E20&color=fff&bold=true&size=40`} 
-                    alt={user.name} 
-                  />
-                  <div className="user-info">
-                    <span className="user-name">{user.name}</span>
-                    <span className="user-email">{user.email}</span>
-                    <span className={`user-role ${user.role.toLowerCase()}`}>
-                      {user.role}
+                  <div className="demo-user-avatar">
+                    <img 
+                      src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1B5E20&color=fff&bold=true&size=40`} 
+                      alt={user.name}
+                    />
+                  </div>
+                  <div className="demo-user-info">
+                    <span className="demo-user-name">{user.name}</span>
+                    <span className="demo-user-email">{user.email}</span>
+                    <span className={`demo-user-role ${(user.role || 'staff').toLowerCase()}`}>
+                      {user.role || 'Staff'}
                     </span>
                   </div>
-                  <span className="user-badge">Click to Login</span>
+                  <div className="demo-user-action">
+                    <span className="demo-user-password">🔑 {user.password}</span>
+                    <span className="demo-user-click">Click to Login →</span>
+                  </div>
                 </div>
               ))}
             </div>
