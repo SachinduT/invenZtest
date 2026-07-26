@@ -70,6 +70,22 @@ export const AuthProvider = ({ children }) => {
     return errorMessages[errorCode] || 'Authentication failed. Please try again.';
   };
 
+  const buildSessionUser = (profileData = {}, fallbackUser = null) => {
+    const fallbackName = fallbackUser?.displayName || fallbackUser?.email?.split('@')[0] || 'User';
+    const name = profileData.name || fallbackUser?.displayName || fallbackUser?.email?.split('@')[0] || 'User';
+    const email = profileData.email || fallbackUser?.email || '';
+    const avatar = profileData.avatar || fallbackUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4CAF50&color=fff&bold=true&size=40`;
+
+    return {
+      ...profileData,
+      id: profileData.uid || fallbackUser?.uid || profileData.id || null,
+      name,
+      email,
+      role: profileData.role || 'User',
+      avatar,
+    };
+  };
+
   // ✅ Sign up with email and password (Firebase)
   const signup = async (email, password, userData) => {
     try {
@@ -107,14 +123,18 @@ export const AuthProvider = ({ children }) => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Fetch user profile from Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        setUserProfile(userDoc.data());
-      }
+      const profileData = userDoc.exists() ? userDoc.data() : {};
+      const sessionUser = buildSessionUser(profileData, user);
+
+      setUserProfile(sessionUser);
+      setUser(sessionUser);
+      setCurrentUser(sessionUser);
+      setIsAuthenticated(true);
+      localStorage.setItem('auth_user', JSON.stringify(sessionUser));
       
       setLoading(false);
-      return { user, message: 'Login successful!' };
+      return { user: sessionUser, message: 'Login successful!' };
     } catch (error) {
       setLoading(false);
       throw new Error(getErrorMessage(error.code));
@@ -360,11 +380,13 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (userDoc.exists()) {
-            setUserProfile(userDoc.data());
-            setCurrentUser(firebaseUser);
-            setIsAuthenticated(true);
-          }
+          const profileData = userDoc.exists() ? userDoc.data() : {};
+          const sessionUser = buildSessionUser(profileData, firebaseUser);
+
+          setUserProfile(sessionUser);
+          setCurrentUser(sessionUser);
+          setUser(sessionUser);
+          setIsAuthenticated(true);
         } catch (error) {
           console.error('Error fetching user profile:', error);
         }
