@@ -151,7 +151,7 @@ const Dashboard = () => {
           <p className="hero-subtitle">Smart Inventory Management System — Built for Sri Lankan Businesses 🇱🇰</p>
           <div className="hero-stats-mini">
             <span>📦 {totalCount || 0} Products</span>
-            <span>🏢 {suppliers?.length || 0} Suppliers</span>
+            <span>🏢 {suppliers?.length || 0} Suppliers...</span>
             <span>⚠️ {lowStockItems?.length || 0} Alerts</span>
           </div>
         </div>
