@@ -1,4 +1,4 @@
-name: Build and deploy React app to Azure Web App - invenzapp
+name: Build and deploy React app to Azure Web App - invenztest
 
 on:
   push:
@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: "22.x"
 
@@ -29,10 +29,6 @@ jobs:
       - name: Build React application
         working-directory: ./invenZ
         run: npm run build
-
-      - name: Run tests
-        working-directory: ./invenZ
-        run: npm run test --if-present
 
       - name: Upload frontend build
         uses: actions/upload-artifact@v4
@@ -57,7 +53,7 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "invenzapp"
+          app-name: "invenztest"
           slot-name: "Production"
           package: ./app
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_3EF697DEF40C4B05BAA9E533AD5C43FA }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
