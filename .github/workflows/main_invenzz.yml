@@ -52,4 +52,4 @@ jobs:
           app-name: 'Invenzz'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E8B261CFB14140B6BAA487AD76CA8B24 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B97F32BCA3F0462A96B00A3FBA937822 }}
