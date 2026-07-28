@@ -54,6 +54,7 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: "invenztest"
-          slot-name: "Production"
           package: ./app
+          
+        
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_76010C572C8A4D94964E5B61C8651755 }}
